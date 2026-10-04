@@ -18,13 +18,15 @@ Keep the existing Next.js feature-oriented structure. Route files should compose
 | --- | --- | --- | --- |
 | 1. Reduce scope | Remove Supabase APIs, clients, dependency, and auto-add suggestions; preserve saved browser data. | No remote or suggestion imports in runtime source; production build succeeds; hydration regression passes with `wardrope-store`. | Implemented in this refactor; verify with the commands below. |
 | 2. Protect data relationships | Category/item deletion must not leave empty outfits or plans pointing to removed outfits. Removing the last subcategory must reassign its items. | Automated store regression tests, including removal of a category containing multiple pieces of one outfit. | Automated coverage added. |
-| 3. Verify user workflows | Complete setup, item editing, outfits, favorites, and planning with mouse and keyboard. | Browser checks below, ideally automated with Playwright. | Pending browser validation. |
+| 3. Verify user workflows | Complete setup, item editing, outfits, favorites, and planning with mouse and keyboard. | Browser checks below, ideally automated with Playwright. | Chromium coverage added for core flows and item-dialog keyboard behavior; remaining checks listed below. |
 | 4. Improve local reliability | Handle unavailable/full storage visibly; validate persisted data; support a deliberate backup and restore workflow. | Tests for malformed data, quota failures, backups, and reloads. No silent data loss. | Planned, not implemented. |
 | 5. Release deliberately | Run checks in GitHub, review changes, and verify the deployed app before calling the release complete. | Passing GitHub Actions run and deployment smoke checks. | Blocked on GitHub authentication and push; deployment not verified. |
 
 ## Automated checks
 
-Run `npm ci`, `npm run check`, and `npm run build` from the repository root. GitHub Actions runs the same checks on Node.js 22.
+Run `npm ci`, `npm run check`, and `npm run test:e2e` from the repository root. Install Chromium first with `npx playwright install chromium` (use `--with-deps` on Linux). The browser suite builds the production app before starting its isolated server. GitHub Actions runs these checks on Node.js 22.
+
+`tests/e2e/workflows.spec.ts` has four passing Chromium tests for manual clothing workflows, outfit/planner workflows, item-dialog keyboard behavior, and retired API responses. `npm run check` also passes all six store tests. These results do not establish that a GitHub run or deployment has passed.
 
 `tests/wardrobe-store.test.ts` covers:
 
@@ -41,23 +43,25 @@ These tests use an in-memory implementation of browser storage. They do not esta
 
 Use a separate browser profile or test origin. Do not clear a real wardrobe to run tests.
 
-- [ ] First visit redirects to setup. Choose defaults and confirm the wardrobe is empty.
-- [ ] Add an item with only name, category, and subcategory. Optional fields remain blank unless entered.
-- [ ] Edit its name/details, filter by category and subcategory, and search by name/color/notes.
-- [ ] Reload and confirm clothing and favorites remain.
-- [ ] Create and edit an outfit using existing items. Confirm the clothing count never increases.
-- [ ] Favorite an outfit, reload, and confirm the selection remains.
-- [ ] Schedule an outfit, replace the same day's assignment, and remove it.
-- [ ] Delete items/categories and confirm no orphaned plans or empty outfits remain.
-- [ ] Navigate forms and dialogs using only the keyboard; check focus placement, trapping, restoration, and Escape. The existing modal needs an accessibility review before this can pass.
+- [x] First visit redirects to setup. Choose defaults and confirm the wardrobe is empty.
+- [x] Add an item with only name, category, and subcategory. Verify color is absent from saved data.
+- [x] Edit its name/details, filter by category and subcategory, and search by name/color/notes.
+- [x] Reload and confirm clothing and favorites remain.
+- [x] Create and rename an outfit using existing items. Confirm the clothing count never increases.
+- [x] Favorite an outfit, reload, and confirm the selection remains.
+- [x] Schedule an outfit, update the same day's assignment, and remove it.
+- [x] Delete items and confirm no orphaned plans or empty outfits remain.
+- [x] Verify item-dialog initial focus, Tab containment, Escape, and focus restoration in Chromium. The shared modal now uses a native dialog with explicit Tab wrapping.
+- [ ] Exercise category deletion and changing outfit composition in the browser (store deletion tests already pass).
+- [ ] Complete keyboard-only form submission and check the outfit dialog in other browsers.
 - [ ] Verify empty/invalid date handling and date display in positive and negative UTC offsets. Date validation and date-only parsing need follow-up work.
 - [ ] Populate 500 items in an isolated test profile and measure listing, filtering, and saving. Record device/browser and timings; the original performance targets are not yet verified.
 - [ ] On the deployed build, confirm retired `/api/bootstrap` and mutation routes no longer exist. Removing them locally does not secure an older deployment.
 
 ## Follow-up priorities
 
-1. Finish browser automation for the critical workflows before expanding features.
-2. Fix date-only parsing, invalid date submission, dialog accessibility, duplicate category naming, and error feedback with reproducing tests.
+1. Extend the passing Chromium suite with the remaining browser checks before expanding features.
+2. Fix date-only parsing, invalid date submission, duplicate category naming, and error feedback with reproducing tests; complete the remaining dialog accessibility checks.
 3. Design explicit backup/restore before claiming local storage is a durable backup.
 4. Review dependency audit findings and update compatible packages in a dedicated change, with the same checks. The initial install reported vulnerabilities; a passing build is not a security audit.
 5. Consider authenticated cloud sync only as a separate project: verified user sessions, versioned database migrations, ownership constraints, transactional writes, and cross-user denial tests must come before deployment. Never trust a user ID supplied by the browser as authentication.

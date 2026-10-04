@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 
 type ModalProps = {
   open: boolean;
@@ -10,31 +10,58 @@ type ModalProps = {
 };
 
 export default function Modal({ open, title, onClose, children }: ModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+
   useEffect(() => {
-    if (!open) return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    const previousFocus = document.activeElement;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-6 py-20">
-      <div
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative z-10 w-full max-w-2xl rounded-[var(--radius-card)] border border-border bg-canvas p-6 shadow-[var(--shadow-soft)]">
-        {title && (
-          <div className="mb-4 text-lg font-semibold text-ink">{title}</div>
-        )}
-        {children}
-      </div>
-    </div>
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : "Dialog"}
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
+        )).filter((element) => element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
+      }}
+      className="fixed m-auto max-h-[calc(100vh-3rem)] w-[calc(100%-3rem)] max-w-2xl overflow-y-auto rounded-[var(--radius-card)] border border-border bg-canvas p-6 text-ink shadow-[var(--shadow-soft)] backdrop:bg-black/20 backdrop:backdrop-blur-sm"
+    >
+      {title && (
+        <h2 id={titleId} className="mb-4 text-lg font-semibold text-ink">{title}</h2>
+      )}
+      {children}
+    </dialog>
   );
 }

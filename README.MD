@@ -41,7 +41,14 @@ npm run build   # production build
 npm run start   # serve the production build
 ```
 
-Store tests do not replace browser workflow tests. The plan identifies checks that still need browser validation.
+Store tests are complemented by Chromium workflow tests:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+The browser suite builds and serves the production app on port 3100 with isolated browser contexts. It covers setup, manual clothing entry/editing/filtering, favorites and reloads, outfit editing, plan replacement/removal, deletion cleanup, keyboard dialog behavior, and retired API responses. It does not use your normal browser profile. Date edge cases, other browsers, storage failures, and 500-item performance remain unverified.
 
 ## Git and GitHub
 
