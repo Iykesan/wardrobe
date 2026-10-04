@@ -2,10 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DATA_MODE } from "@/shared/config/constants";
 import { defaultCategorySeeds } from "@/features/setup/seeds";
-import { api } from "@/features/wardrobe/api/client";
-import { getOrCreateUserId } from "@/features/wardrobe/api/user";
 import { createId, normalizeText, sortByOrder } from "@/shared/lib/utils";
 import type {
   Category,
@@ -15,11 +12,7 @@ import type {
   PlanEntry,
 } from "@/shared/types";
 
-type DataMode = "local" | "supabase";
-
 type WardrobeState = {
-  dataMode: DataMode;
-  hasBootstrapped: boolean;
   isHydrated: boolean;
   isLoading: boolean;
   error?: string;
@@ -31,7 +24,6 @@ type WardrobeState = {
   setupComplete: boolean;
   setHydrated: () => void;
   setError: (message?: string) => void;
-  initialize: () => Promise<void>;
   completeSetup: (
     categories: Category[],
     subcategories: Subcategory[],
@@ -42,10 +34,10 @@ type WardrobeState = {
   removeCategory: (id: string) => Promise<void>;
   addSubcategory: (categoryId: string, name: string) => Promise<void>;
   updateSubcategory: (id: string, name: string) => Promise<void>;
-      removeSubcategory: (id: string) => Promise<void>;
-      addItem: (
-        payload: Omit<WardrobeItem, "id" | "createdAt" | "isFavorite">,
-      ) => Promise<WardrobeItem>;
+  removeSubcategory: (id: string) => Promise<void>;
+  addItem: (
+    payload: Omit<WardrobeItem, "id" | "createdAt" | "isFavorite">,
+  ) => Promise<WardrobeItem>;
   updateItem: (payload: WardrobeItem) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   toggleItemFavorite: (id: string) => void;
@@ -73,8 +65,6 @@ const findDefaultSubcategory = (
 export const useWardrobeStore = create<WardrobeState>()(
   persist(
     (set, get) => ({
-      dataMode: DATA_MODE as DataMode,
-      hasBootstrapped: false,
       isHydrated: false,
       isLoading: false,
       categories: [],
@@ -85,50 +75,12 @@ export const useWardrobeStore = create<WardrobeState>()(
       setupComplete: false,
       setHydrated: () => set({ isHydrated: true }),
       setError: (message) => set({ error: message }),
-      initialize: async () => {
-        if (get().dataMode !== "supabase" || get().hasBootstrapped) {
-          return;
-        }
-        const userId = getOrCreateUserId();
-        set({ isLoading: true, error: undefined });
-        try {
-          const data = await api.bootstrap(userId);
-          set({
-            categories: data.categories,
-            subcategories: data.subcategories,
-            items: data.items,
-            outfits: data.outfits,
-            plans: data.plans,
-            setupComplete: data.categories.length > 0,
-            hasBootstrapped: true,
-            isLoading: false,
-          });
-        } catch (err) {
-          set({
-            error:
-              err instanceof Error
-                ? err.message
-                : "Supabase is unreachable. Using local data.",
-            isLoading: false,
-            hasBootstrapped: true,
-          });
-        }
-      },
       completeSetup: async (categories, subcategories) => {
         set({
           categories: sortByOrder(categories),
           subcategories: sortByOrder(subcategories),
           setupComplete: true,
         });
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await Promise.all([
-            ...categories.map((category) => api.createCategory(category, userId)),
-            ...subcategories.map((subcategory) =>
-              api.createSubcategory(subcategory, userId),
-            ),
-          ]);
-        }
       },
       seedDefaults: async () => {
         const seedCategories: Category[] = [];
@@ -184,11 +136,6 @@ export const useWardrobeStore = create<WardrobeState>()(
           categories: [...state.categories, category],
           subcategories: [...state.subcategories, subcategory],
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.createCategory(category, userId);
-          await api.createSubcategory(subcategory, userId);
-        }
       },
       updateCategory: async (id, name) => {
         const trimmed = name.trim();
@@ -211,12 +158,6 @@ export const useWardrobeStore = create<WardrobeState>()(
               : subcategory,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const category = get().categories.find((item) => item.id === id);
-          if (!category) return;
-          const userId = getOrCreateUserId();
-          await api.updateCategory(category, userId);
-        }
       },
       removeCategory: async (id) => {
         const itemsToRemove = get().items.filter(
@@ -234,9 +175,8 @@ export const useWardrobeStore = create<WardrobeState>()(
         const removedOutfitIds = get()
           .outfits.filter(
             (outfit) =>
-              outfit.itemIds.some((itemId) =>
-                itemIdsToRemove.includes(itemId),
-              ) && outfit.itemIds.length === 1,
+              outfit.itemIds.length > 0 &&
+              outfit.itemIds.every((itemId) => itemIdsToRemove.includes(itemId)),
           )
           .map((outfit) => outfit.id);
         set((state) => ({
@@ -250,10 +190,6 @@ export const useWardrobeStore = create<WardrobeState>()(
             (plan) => !removedOutfitIds.includes(plan.outfitId),
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.deleteCategory(id, userId);
-        }
       },
       addSubcategory: async (categoryId, name) => {
         const trimmed = name.trim();
@@ -284,10 +220,6 @@ export const useWardrobeStore = create<WardrobeState>()(
         set((state) => ({
           subcategories: [...state.subcategories, subcategory],
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.createSubcategory(subcategory, userId);
-        }
       },
       updateSubcategory: async (id, name) => {
         const trimmed = name.trim();
@@ -300,12 +232,6 @@ export const useWardrobeStore = create<WardrobeState>()(
             subcategory.id === id ? { ...subcategory, name: trimmed } : subcategory,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const subcategory = get().subcategories.find((item) => item.id === id);
-          if (!subcategory) return;
-          const userId = getOrCreateUserId();
-          await api.updateSubcategory(subcategory, userId);
-        }
       },
       removeSubcategory: async (id) => {
         const subcategory = get().subcategories.find((item) => item.id === id);
@@ -336,10 +262,6 @@ export const useWardrobeStore = create<WardrobeState>()(
               : item,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.deleteSubcategory(id, userId);
-        }
       },
       addItem: async (payload) => {
         const item: WardrobeItem = {
@@ -349,10 +271,6 @@ export const useWardrobeStore = create<WardrobeState>()(
           ...payload,
         };
         set((state) => ({ items: [item, ...state.items] }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.createItem(item, userId);
-        }
         return item;
       },
       updateItem: async (payload) => {
@@ -361,10 +279,6 @@ export const useWardrobeStore = create<WardrobeState>()(
             item.id === payload.id ? { ...payload } : item,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.updateItem(payload, userId);
-        }
       },
       removeItem: async (id) => {
         const updatedOutfits = get()
@@ -385,10 +299,6 @@ export const useWardrobeStore = create<WardrobeState>()(
             (plan) => !removedOutfitIds.includes(plan.outfitId),
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.deleteItem(id, userId);
-        }
       },
       toggleItemFavorite: (id) => {
         set((state) => ({
@@ -406,10 +316,6 @@ export const useWardrobeStore = create<WardrobeState>()(
           itemIds: payload.itemIds,
         };
         set((state) => ({ outfits: [outfit, ...state.outfits] }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.createOutfit(outfit, userId);
-        }
       },
       updateOutfit: async (payload) => {
         set((state) => ({
@@ -417,20 +323,12 @@ export const useWardrobeStore = create<WardrobeState>()(
             outfit.id === payload.id ? { ...payload } : outfit,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.updateOutfit(payload, userId);
-        }
       },
       removeOutfit: async (id) => {
         set((state) => ({
           outfits: state.outfits.filter((outfit) => outfit.id !== id),
           plans: state.plans.filter((plan) => plan.outfitId !== id),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.deleteOutfit(id, userId);
-        }
       },
       toggleOutfitFavorite: (id) => {
         set((state) => ({
@@ -454,10 +352,6 @@ export const useWardrobeStore = create<WardrobeState>()(
               plan.id === existing.id ? updated : plan,
             ),
           }));
-          if (get().dataMode === "supabase") {
-            const userId = getOrCreateUserId();
-            await api.updatePlan(updated, userId);
-          }
           return;
         }
         const plan: PlanEntry = {
@@ -466,10 +360,6 @@ export const useWardrobeStore = create<WardrobeState>()(
           ...payload,
         };
         set((state) => ({ plans: [...state.plans, plan] }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.createPlan(plan, userId);
-        }
       },
       updatePlan: async (payload) => {
         set((state) => ({
@@ -477,19 +367,11 @@ export const useWardrobeStore = create<WardrobeState>()(
             plan.id === payload.id ? { ...payload } : plan,
           ),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.updatePlan(payload, userId);
-        }
       },
       removePlan: async (id) => {
         set((state) => ({
           plans: state.plans.filter((plan) => plan.id !== id),
         }));
-        if (get().dataMode === "supabase") {
-          const userId = getOrCreateUserId();
-          await api.deletePlan(id, userId);
-        }
       },
     }),
     {

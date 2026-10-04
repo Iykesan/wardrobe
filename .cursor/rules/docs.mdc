@@ -2,6 +2,4 @@
 alwaysApply: true
 ---
 
-This following document has all our features and requirements for this project. Keep this doc in your memory so that you can stay aligned. 
-
-@wardrobe_app_all_documentation.md
+The original product proposal is in @wardrobe_app_all_documentation.md. For the agreed local-only, manual-entry scope, current milestones, and acceptance checks, follow @docs/GOALS_AND_TEST_PLAN.md and @README.MD when they conflict with the original proposal.

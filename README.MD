@@ -1,38 +1,48 @@
 # Wardrobe.app
 
-A clean, minimal digital wardrobe to catalog items, build outfits, and plan what to wear next.
+A single-user digital wardrobe for manually cataloging clothes, saving outfits, and planning what to wear. Data stays in this browser's local storage; there is no account, server database, or cross-device sync.
 
-## Quick start
+## Run locally
+
+Use Node.js 22 and npm.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open https://wardrope-five.vercel.app/setup
+Open http://localhost:3000/setup. No environment variables or Supabase credentials are needed. The existing deployment URL is https://wardrope-five.vercel.app/setup; it does not reflect local changes until redeployed.
 
-## Data modes
+## Data and scope
 
-The MVP ships in **local** mode by default (localStorage persistence). To connect Supabase:
+- Setup creates categories and subcategories, not clothing inventory.
+- Add clothes manually, then select owned items to create outfits.
+- Existing data uses the `wardrope-store` local-storage key. Its spelling is retained for compatibility.
+- Existing items, including previously generated items, are not deleted by this refactor. Review and delete unwanted items yourself.
+- Clearing browser/site data removes your wardrobe. Private browsing and browser storage limits can affect persistence. There is no export or recovery feature yet.
+- Supabase API routes and automatic clothing/outfit generation have been removed. Data stored only in a remote database is not migrated by this change. Retain any existing database until you have backed up its data.
 
-1. Update `.env.local` with your Supabase credentials.
-2. Set `NEXT_PUBLIC_DATA_MODE=supabase`.
-3. Ensure your Supabase tables match the fields used in `src/server/supabase/queries.ts`.
+## Structure
 
-> Note: If you enable Supabase, the app uses API routes and a service role key. Configure Row Level Security accordingly.
+- `src/app`: Next.js route entrypoints and root layout.
+- `src/features`: wardrobe, outfits, planner, and setup screens, components, and hooks.
+- `src/features/wardrobe/store`: shared persisted application state and data operations.
+- `src/shared`: reusable UI, configuration, types, styles, and utilities.
+- `tests`: automated store regression tests.
+- `docs`: goals, acceptance criteria, and test plan.
 
-## Project structure
+See [the goals and test plan](docs/GOALS_AND_TEST_PLAN.md) for the active scope. `wardrobe_app_all_documentation.md` preserves the original product proposal; its Supabase and suggestion-related sections are not the current implementation contract.
 
-- `src/app` thin route entrypoints and API handlers
-- `src/features` domain-owned screens, components, hooks, and local helpers
-- `src/shared` reusable UI, config, types, styles, and utilities
-- `src/server` Supabase and server-only helpers
-
-## Scripts
+## Checks
 
 ```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
+npm run check   # lint, route type generation, TypeScript, and regression tests
+npm run build   # production build
+npm run start   # serve the production build
 ```
+
+Store tests do not replace browser workflow tests. The plan identifies checks that still need browser validation.
+
+## Git and GitHub
+
+Commit source, tests, documentation, configuration, and `package-lock.json`. Do not commit `.env.local`, `.pi/`, `node_modules/`, or `.next/`. The GitHub Actions workflow runs the checks and production build on pushes and pull requests. Local commits must still be pushed with working GitHub credentials before GitHub can run them.
