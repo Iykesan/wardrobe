@@ -142,6 +142,8 @@ Acceptance: account data isolation tests and deletion/export flows pass before u
 
 ## Test strategy
 
+See [the phase-by-phase test catalogue](PHASE_TEST_CASES.md) for concrete fixtures, steps, expected outcomes, and acceptance gates. Roadmap phases 3–7 map to stages 0–4 here; phases 8 and 9 split account work from higher-fidelity research. These cases remain planned until the relevant features exist and evidence is recorded.
+
 - **Domain tests:** profile validation, units, version migrations, item/asset references, duplicate IDs, supported body ranges, and layer rules.
 - **Persistence tests:** old wardrobes without profiles, missing assets, malformed imports, quota errors, backup/restore, and deletion without orphaned configuration.
 - **Browser tests:** customize/save/reload an avatar; map a manually entered item; preview an existing outfit; rotate/reset the view; handle unsupported items and loading failures; continue using the app without graphics support.

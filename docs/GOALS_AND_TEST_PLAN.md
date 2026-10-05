@@ -24,6 +24,8 @@ Keep the existing Next.js feature-oriented structure. Route files should compose
 
 ## Automated checks
 
+[The phase-by-phase test catalogue](PHASE_TEST_CASES.md) defines cases and release gates for all nine roadmap phases, including the future avatar, 3D clothing, accounts, and fit-research work. Planned cases are not executable or passing evidence; the catalogue maps existing coverage separately.
+
 Run `npm ci`, `npm run check`, and `npm run test:e2e` from the repository root. Install Chromium first with `npx playwright install chromium` (use `--with-deps` on Linux). The browser suite builds the production app before starting its isolated server. GitHub Actions runs these checks on Node.js 22.
 
 `tests/e2e/workflows.spec.ts` has four passing Chromium tests for manual clothing workflows, outfit/planner workflows, item-dialog keyboard behavior, and retired API responses. `npm run check` also passes all six store tests. These results do not establish that a GitHub run or deployment has passed.
