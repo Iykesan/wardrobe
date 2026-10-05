@@ -68,7 +68,9 @@ Verification for this increment: `npm run check` passed 11 unit/store tests plus
 
 Planner follow-up: saved fields are derived from hydrated plan data until the user edits a draft; the upcoming calendar refreshes at midnight and on focus/visibility changes without replacing draft text. Added three browser cases for UTC, America/Los_Angeles and Asia/Tokyo covering saved fields, date labels, empty-date rejection, midnight refresh, and unsaved-draft preservation. Verification now passes 11 unit/store tests and seven Chromium tests.
 
-Still required: versioned persistence, malformed-data recovery, atomic write failure handling, backup/restore, multi-tab conflict protection, remaining browser cases, and measured 500-item performance. Existing invalid legacy graphs are not repaired by the new write validator; recovery must preserve their original bytes.
+Persistence increment: version 1 envelopes preserve the `wardrope-store` key; validated legacy data upgrades on its next write. Writes use Web Locks and exact loaded-byte comparison, and publish state only after persistence succeeds. Unsupported locking disables saving. Recovery preserves invalid/future-version bytes and provides their download. Setup offers JSON export, validated import preview, explicit replacement and cancellation. Imports are limited to 5 MiB. Recovery/reset also checks for concurrent changes. This protects cooperating current-version tabs, not older deployed code that ignores the lock protocol.
+
+Verification: 32 unit/store tests and 13 Chromium tests passed, including malformed/future data, quota failures, blocked reads, backup round-trip/cancellation and stale-tab rejection. Full Phase 1 acceptance still needs the remaining mutation failure/browser cases, measured 500-item performance, and dependency review. Existing invalid legacy graphs are not auto-repaired; their original bytes remain available for recovery.
 
 ## Follow-up priorities
 

@@ -19,7 +19,9 @@ Open http://localhost:3000/setup. No environment variables or Supabase credentia
 - Add clothes manually, then select owned items to create outfits.
 - Existing data uses the `wardrope-store` local-storage key. Its spelling is retained for compatibility.
 - Existing items, including previously generated items, are not deleted by this refactor. Review and delete unwanted items yourself.
-- Clearing browser/site data removes your wardrobe. Private browsing and browser storage limits can affect persistence. There is no export or recovery feature yet.
+- Clearing browser/site data removes your wardrobe. Export backups regularly through **Setup → Export backup**. Import previews record counts and replaces the whole wardrobe only after confirmation; it does not merge records. Files larger than 5 MiB are rejected.
+- Saved data now uses a version 1 envelope. Valid legacy data loads without changing its bytes and is upgraded on the next successful write. Invalid or newer-format data opens a recovery screen with an original-data download; it is never automatically reset.
+- Writes require Web Locks (a supported browser on HTTPS or localhost). Changes are written before they appear as saved. A stale tab is blocked rather than overwriting newer data; reload it to continue. Older deployments that do not participate in this locking protocol must not remain open alongside this version.
 - Supabase API routes and automatic clothing/outfit generation have been removed. Data stored only in a remote database is not migrated by this change. Retain any existing database until you have backed up its data.
 
 ## Structure

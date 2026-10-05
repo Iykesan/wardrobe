@@ -10,7 +10,7 @@ type OutfitCardProps = {
   items: WardrobeItem[];
   onEdit: (outfit: Outfit) => void;
   onDelete: (id: string) => void;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (id: string) => void | Promise<void>;
 };
 
 export default function OutfitCard({
@@ -37,9 +37,12 @@ export default function OutfitCard({
           className={`rounded-full border border-border p-2 transition ${
             outfit.isFavorite ? "text-accent" : "text-muted hover:text-accent"
           }`}
-          onClick={() => onToggleFavorite(outfit.id)}
+          onClick={() => {
+            void onToggleFavorite(outfit.id);
+          }}
           type="button"
           aria-label="Toggle favorite"
+          aria-pressed={outfit.isFavorite}
         >
           <Star
             size={16}

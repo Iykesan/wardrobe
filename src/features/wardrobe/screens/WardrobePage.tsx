@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import CategoryFilter from "@/features/wardrobe/components/CategoryFilter";
 import ItemCard from "@/features/wardrobe/components/ItemCard";
 import ItemForm from "@/features/wardrobe/components/ItemForm";
+import StorageRecovery from "@/features/wardrobe/components/StorageRecovery";
 import { useWardrobe } from "@/features/wardrobe/hooks/useWardrobe";
+import { useWardrobeInit } from "@/features/wardrobe/hooks/useWardrobeInit";
 import { useWardrobeStore } from "@/features/wardrobe/store/wardrobeStore";
 import Button from "@/shared/components/common/Button";
 import InlineNotice from "@/shared/components/common/InlineNotice";
@@ -16,6 +18,7 @@ import type { WardrobeItem } from "@/shared/types";
 
 export default function WardrobePage() {
   const router = useRouter();
+  useWardrobeInit();
   const isHydrated = useWardrobeStore((state) => state.isHydrated);
   const {
     categories,
@@ -29,6 +32,9 @@ export default function WardrobePage() {
     isLoading,
     error,
     setError,
+    storageStatus,
+    conflict,
+    reloadFromDisk,
   } = useWardrobe();
   const { feedback, show, clear } = useFeedback();
 
@@ -65,11 +71,13 @@ export default function WardrobePage() {
     return activeSubcategoryId;
   }, [activeSubcategoryId, safeCategoryId, subcategories]);
 
+  const canRoute = storageStatus === "ready" || storageStatus === "empty";
+
   useEffect(() => {
-    if (isHydrated && !setupComplete) {
+    if (isHydrated && canRoute && !setupComplete) {
       router.replace("/setup");
     }
-  }, [isHydrated, setupComplete, router]);
+  }, [isHydrated, canRoute, setupComplete, router]);
 
   const filteredItems = useMemo(() => {
     const query = normalizeText(searchQuery);
@@ -101,8 +109,33 @@ export default function WardrobePage() {
   };
 
   const handleRemoveItem = async (id: string) => {
-    await removeItem(id);
-    show({ type: "success", message: "Item deleted." });
+    try {
+      await removeItem(id);
+      show({ type: "success", message: "Item deleted." });
+    } catch (removeError) {
+      show({
+        type: "error",
+        message:
+          removeError instanceof Error
+            ? removeError.message
+            : "Unable to delete item.",
+      });
+    }
+  };
+
+  const handleToggleFavorite = async (id: string) => {
+    try {
+      await toggleItemFavorite(id);
+      show({ type: "success", message: "Favorite updated." });
+    } catch (favoriteError) {
+      show({
+        type: "error",
+        message:
+          favoriteError instanceof Error
+            ? favoriteError.message
+            : "Unable to update favorite.",
+      });
+    }
   };
 
   const handleSaveItem = async (
@@ -129,11 +162,37 @@ export default function WardrobePage() {
     setSearchQuery("");
   };
 
+  if (!isHydrated) {
+    return <InlineNotice>Loading wardrobe...</InlineNotice>;
+  }
+
+  if (storageStatus === "recovery-required" || storageStatus === "unavailable") {
+    return (
+      <div className="flex flex-col gap-8">
+        <StorageRecovery />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      {(isLoading || error || feedback) && (
+      {(isLoading || error || feedback || conflict) && (
         <div className="flex flex-col gap-3">
           {isLoading && <InlineNotice>Loading wardrobe...</InlineNotice>}
+          {conflict && (
+            <InlineNotice variant="error">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span>{conflict.message}</span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void reloadFromDisk()}
+                >
+                  Reload
+                </Button>
+              </div>
+            </InlineNotice>
+          )}
           {error && (
             <InlineNotice variant="error" onDismiss={() => setError(undefined)}>
               {error}
@@ -228,7 +287,7 @@ export default function WardrobePage() {
                   )}
                   onEdit={openEdit}
                   onDelete={handleRemoveItem}
-                  onToggleFavorite={toggleItemFavorite}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               ))}
             </div>

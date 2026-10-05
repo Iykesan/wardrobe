@@ -12,19 +12,49 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 let store: typeof import("../src/features/wardrobe/store/wardrobeStore").useWardrobeStore;
+
+// Node has no Web Locks; writes require it, so install a deterministic fake.
+let lockTail: Promise<unknown> = Promise.resolve();
+function installFakeLock() {
+  const locks = {
+    request: (
+      name: string,
+      _options: unknown,
+      callback: (lock: unknown) => unknown,
+    ) => {
+      const run = lockTail.then(() => callback({ name, mode: "exclusive" }));
+      lockTail = run.then(
+        () => undefined,
+        () => undefined,
+      );
+      return run;
+    },
+  };
+  Object.defineProperty(globalThis.navigator, "locks", {
+    value: locks,
+    configurable: true,
+  });
+}
+
 before(async () => {
+  installFakeLock();
   ({ useWardrobeStore: store } = await import(
     "../src/features/wardrobe/store/wardrobeStore"
   ));
 });
 
-beforeEach(() => {
+async function resetStore() {
   storage.clear();
   store.setState({
     categories: [], subcategories: [], items: [], outfits: [], plans: [],
-    setupComplete: false, error: undefined,
+    setupComplete: false, error: undefined, isHydrated: false, isLoading: false,
+    storageStatus: "initializing", recovery: undefined, conflict: undefined,
+    loadedRaw: null,
   });
-});
+  await store.getState().initialize({ force: true });
+}
+
+beforeEach(resetStore);
 
 async function addItem(name = "Owned shirt") {
   const state = store.getState();
@@ -80,12 +110,11 @@ test("manual items and favorites survive hydration using the existing storage ke
   await store.getState().seedDefaults();
   const item = await addItem();
   await store.getState().updateItem({ ...item, name: "Renamed shirt" });
-  store.getState().toggleItemFavorite(item.id);
+  await store.getState().toggleItemFavorite(item.id);
   const saved = storage.get("wardrope-store");
   assert.ok(saved);
-  store.setState({ items: [] });
-  storage.set("wardrope-store", saved);
-  await store.persist.rehydrate();
+  store.setState({ items: [], isHydrated: false, loadedRaw: null });
+  await store.getState().initialize({ force: true });
   assert.equal(store.getState().items[0].name, "Renamed shirt");
   assert.equal(store.getState().items[0].isFavorite, true);
 });
@@ -132,7 +161,7 @@ test("outfit favorites persist and planning replaces a day's assignment", async 
   const item = await addItem();
   await store.getState().addOutfit({ itemIds: [item.id], isFavorite: false });
   const outfit = store.getState().outfits[0];
-  store.getState().toggleOutfitFavorite(outfit.id);
+  await store.getState().toggleOutfitFavorite(outfit.id);
   const persisted = JSON.parse(storage.get("wardrope-store")!);
   assert.equal(persisted.state.outfits[0].isFavorite, true);
   await store.getState().addPlan({ outfitId: outfit.id, plannedDate: "2030-01-02" });

@@ -5,20 +5,27 @@ import { Layers } from "lucide-react";
 import OutfitBuilder from "@/features/outfits/components/OutfitBuilder";
 import OutfitCard from "@/features/outfits/components/OutfitCard";
 import { useOutfits } from "@/features/outfits/hooks/useOutfits";
+import StorageRecovery from "@/features/wardrobe/components/StorageRecovery";
 import { useWardrobe } from "@/features/wardrobe/hooks/useWardrobe";
+import { useWardrobeInit } from "@/features/wardrobe/hooks/useWardrobeInit";
 import Button from "@/shared/components/common/Button";
 import InlineNotice from "@/shared/components/common/InlineNotice";
 import { useFeedback } from "@/shared/hooks/useFeedback";
 import type { Outfit } from "@/shared/types";
 
 export default function OutfitsPage() {
+  useWardrobeInit();
   const { outfits, addOutfit, updateOutfit, removeOutfit, toggleOutfitFavorite } =
     useOutfits();
   const {
     items,
+    isHydrated,
     isLoading,
     error,
     setError,
+    storageStatus,
+    conflict,
+    reloadFromDisk,
   } = useWardrobe();
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingOutfit, setEditingOutfit] = useState<Outfit | undefined>();
@@ -35,15 +42,66 @@ export default function OutfitsPage() {
   };
 
   const handleRemoveOutfit = async (id: string) => {
-    await removeOutfit(id);
-    show({ type: "success", message: "Outfit deleted." });
+    try {
+      await removeOutfit(id);
+      show({ type: "success", message: "Outfit deleted." });
+    } catch (removeError) {
+      show({
+        type: "error",
+        message:
+          removeError instanceof Error
+            ? removeError.message
+            : "Unable to delete outfit.",
+      });
+    }
   };
+
+  const handleToggleFavorite = async (id: string) => {
+    try {
+      await toggleOutfitFavorite(id);
+      show({ type: "success", message: "Favorite updated." });
+    } catch (favoriteError) {
+      show({
+        type: "error",
+        message:
+          favoriteError instanceof Error
+            ? favoriteError.message
+            : "Unable to update favorite.",
+      });
+    }
+  };
+
+  if (!isHydrated) {
+    return <InlineNotice>Loading outfits...</InlineNotice>;
+  }
+
+  if (storageStatus === "recovery-required" || storageStatus === "unavailable") {
+    return (
+      <div className="flex flex-col gap-8">
+        <StorageRecovery />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
-      {(isLoading || error || feedback) && (
+      {(isLoading || error || feedback || conflict) && (
         <div className="flex flex-col gap-3">
           {isLoading && <InlineNotice>Loading outfits...</InlineNotice>}
+          {conflict && (
+            <InlineNotice variant="error">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span>{conflict.message}</span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void reloadFromDisk()}
+                >
+                  Reload
+                </Button>
+              </div>
+            </InlineNotice>
+          )}
           {error && (
             <InlineNotice variant="error" onDismiss={() => setError(undefined)}>
               {error}
@@ -88,7 +146,7 @@ export default function OutfitsPage() {
               items={items}
               onEdit={openEdit}
               onDelete={handleRemoveOutfit}
-              onToggleFavorite={toggleOutfitFavorite}
+              onToggleFavorite={handleToggleFavorite}
             />
           ))}
         </div>

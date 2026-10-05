@@ -5,8 +5,12 @@ import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import CategoryManager from "@/features/setup/components/CategoryManager";
 import { defaultCategorySeeds } from "@/features/setup/seeds";
+import BackupRestore from "@/features/wardrobe/components/BackupRestore";
+import StorageRecovery from "@/features/wardrobe/components/StorageRecovery";
 import { useWardrobe } from "@/features/wardrobe/hooks/useWardrobe";
+import { useWardrobeInit } from "@/features/wardrobe/hooks/useWardrobeInit";
 import Button from "@/shared/components/common/Button";
+import InlineNotice from "@/shared/components/common/InlineNotice";
 import { createId } from "@/shared/lib/utils";
 import type { Category, Subcategory } from "@/shared/types";
 
@@ -27,12 +31,15 @@ const buildDrafts = () =>
 
 export default function SetupPage() {
   const router = useRouter();
+  useWardrobeInit();
   const {
     categories,
     subcategories,
     completeSetup,
     seedDefaults,
     setupComplete,
+    isHydrated,
+    storageStatus,
     addCategory,
     updateCategory,
     removeCategory,
@@ -114,6 +121,18 @@ export default function SetupPage() {
     }
   };
 
+  if (!isHydrated) {
+    return <InlineNotice>Loading setup...</InlineNotice>;
+  }
+
+  if (storageStatus === "recovery-required" || storageStatus === "unavailable") {
+    return (
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+        <StorageRecovery />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
       <header className="flex flex-col gap-3">
@@ -148,6 +167,15 @@ export default function SetupPage() {
             onUpdateSubcategory={updateSubcategory}
             onRemoveSubcategory={removeSubcategory}
           />
+          <div className="rounded-[var(--radius-card)] border border-border bg-white/80 p-5">
+            <div className="mb-2 text-sm font-semibold text-ink">
+              Backup and restore
+            </div>
+            <p className="mb-4 text-xs text-muted">
+              Keep a copy of your wardrobe or restore one you saved earlier.
+            </p>
+            <BackupRestore />
+          </div>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -255,6 +283,16 @@ export default function SetupPage() {
               <Button type="button" onClick={handleComplete}>
                 Finish setup
               </Button>
+            </div>
+
+            <div className="rounded-[var(--radius-card)] border border-border bg-white/80 p-5">
+              <div className="mb-2 text-sm font-semibold text-ink">
+                Restore a backup
+              </div>
+              <p className="mb-4 text-xs text-muted">
+                Import a wardrobe you exported earlier.
+              </p>
+              <BackupRestore />
             </div>
           </div>
         </div>

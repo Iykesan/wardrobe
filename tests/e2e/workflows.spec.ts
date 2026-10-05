@@ -30,7 +30,11 @@ test("manual clothing can be edited, filtered, favorited and reloaded", async ({
   await page.getByLabel("Color", { exact: true }).fill("Blue");
   await page.getByLabel("Notes", { exact: true }).fill("Office");
   await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button", { name: "Toggle favorite" }).click();
+  await expect
+    .poll(async () => (await savedState(page)).items[0].isFavorite)
+    .toBe(true);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Blue work shirt" })).toBeVisible();
   expect((await savedState(page)).items[0].isFavorite).toBe(true);
@@ -63,7 +67,11 @@ test("outfits use owned items and plans are replaced, removed and cleaned up", a
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   await page.getByLabel("Outfit name (optional)").fill("Office outfit");
   await page.getByRole("button", { name: "Save outfit", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button", { name: "Toggle favorite" }).click();
+  await expect
+    .poll(async () => (await savedState(page)).outfits[0].isFavorite)
+    .toBe(true);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Office outfit" })).toBeVisible();
   expect((await savedState(page)).items).toHaveLength(2);
@@ -72,19 +80,33 @@ test("outfits use owned items and plans are replaced, removed and cleaned up", a
   await page.getByLabel("Date", { exact: true }).fill("2035-06-15");
   await page.getByRole("combobox", { name: "Outfit", exact: true }).selectOption({ label: "Office outfit" });
   await page.getByRole("button", { name: "Schedule outfit" }).click();
+  await expect
+    .poll(async () => (await savedState(page)).plans.length)
+    .toBe(1);
   await page.getByLabel("Notes (optional)").fill("Meeting");
   await page.getByRole("button", { name: "Update plan" }).click();
-  expect((await savedState(page)).plans).toHaveLength(1);
-  expect((await savedState(page)).plans[0].description).toBe("Meeting");
+  await expect
+    .poll(async () => (await savedState(page)).plans[0]?.description)
+    .toBe("Meeting");
   await page.getByRole("button", { name: "Remove", exact: true }).click();
-  expect((await savedState(page)).plans).toHaveLength(0);
+  await expect
+    .poll(async () => (await savedState(page)).plans.length)
+    .toBe(0);
   await page.getByRole("combobox", { name: "Outfit", exact: true }).selectOption({ label: "Office outfit" });
   await page.getByRole("button", { name: "Schedule outfit" }).click();
+  await expect
+    .poll(async () => (await savedState(page)).plans.length)
+    .toBe(1);
   await page.getByRole("link", { name: "Wardrobe", exact: true }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).first().click();
-  expect((await savedState(page)).outfits[0].itemIds).toHaveLength(1);
+  await expect
+    .poll(async () => (await savedState(page)).outfits[0]?.itemIds.length)
+    .toBe(1);
   await page.getByRole("button", { name: "Delete", exact: true }).click();
-  expect((await savedState(page)).outfits).toHaveLength(0);
+  await expect(page.getByText("No items yet", { exact: true })).toBeVisible();
+  await expect
+    .poll(async () => (await savedState(page)).outfits.length)
+    .toBe(0);
   expect((await savedState(page)).plans).toHaveLength(0);
 });
 

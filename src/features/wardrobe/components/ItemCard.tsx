@@ -11,7 +11,7 @@ type ItemCardProps = {
   subcategory?: Subcategory;
   onEdit: (item: WardrobeItem) => void;
   onDelete: (id: string) => void;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (id: string) => void | Promise<void>;
 };
 
 export default function ItemCard({
@@ -46,9 +46,12 @@ export default function ItemCard({
           className={`rounded-full border border-border p-2 transition ${
             item.isFavorite ? "text-accent" : "text-muted hover:text-accent"
           }`}
-          onClick={() => onToggleFavorite(item.id)}
+          onClick={() => {
+            void onToggleFavorite(item.id);
+          }}
           type="button"
           aria-label="Toggle favorite"
+          aria-pressed={item.isFavorite}
         >
           <Star
             size={16}
