@@ -75,9 +75,10 @@ export default function OutfitBuilder({
           <OutfitVisual items={selectionPreview} />
         </div>
 
-        <label className="flex flex-col gap-1 text-sm text-muted">
+        <label className="flex flex-col gap-1 text-sm text-muted" htmlFor="outfit-name">
           <span className="font-medium text-ink">Outfit name (optional)</span>
           <input
+            id="outfit-name"
             className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             placeholder="Weekend casual"
             value={name}
@@ -102,16 +103,25 @@ export default function OutfitBuilder({
         </div>
 
         <div className="flex flex-col gap-2">
-          <div className="text-xs font-semibold uppercase tracking-widest text-muted">
+          <div
+            id="outfit-items-label"
+            className="text-xs font-semibold uppercase tracking-widest text-muted"
+          >
             Select items
           </div>
-          <div className="grid max-h-[280px] gap-2 overflow-y-auto pr-2">
+          <div
+            role="group"
+            aria-labelledby="outfit-items-label"
+            aria-describedby={error ? "outfit-selection-error" : undefined}
+            className="grid max-h-[280px] gap-2 overflow-y-auto pr-2"
+          >
             {items.map((item) => {
               const selected = selectedIds.includes(item.id);
               return (
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={selected}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition ${
                     selected
                       ? "border-accent bg-accent-soft text-accent"
@@ -133,7 +143,11 @@ export default function OutfitBuilder({
               );
             })}
           </div>
-          {error && <span role="alert" className="text-xs text-danger">{error}</span>}
+          {error && (
+            <span id="outfit-selection-error" role="alert" className="text-xs text-danger">
+              {error}
+            </span>
+          )}
         </div>
 
         <div className="flex justify-end gap-3">

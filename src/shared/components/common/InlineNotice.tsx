@@ -19,6 +19,7 @@ export default function InlineNotice({
 }: InlineNoticeProps) {
   return (
     <div
+      role={variant === "error" ? "alert" : "status"}
       className={`rounded-[var(--radius-card)] border px-4 py-3 text-sm ${variantStyles[variant]}`}
     >
       <div className="flex items-start justify-between gap-4">

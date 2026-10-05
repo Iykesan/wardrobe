@@ -35,6 +35,16 @@ Parent run: Chromium 153.0.8010.12, MacIntel platform, 1280×720 viewport, DPR 1
 
 These are single-run end-to-end timings including Playwright actionability/polling and concurrent test load. They are not isolated storage timings or percentile measurements. The save observation exceeds one second, so it cannot substantiate the original save-latency goal. The test records measurements without a performance assertion; its green status only certifies the functional steps. Follow up with browser-side event-to-persistence instrumentation, repeated isolated runs, and separately approved load/search budgets before granting P1-11 acceptance.
 
+## Follow-up: browser-side latency and error semantics
+
+After the framework update in `72a7d57`, browser-side instrumentation measures from the actual input event timestamp to completion of `localStorage.setItem`, excluding Playwright actionability and polling. Parent focused verification on Chromium 153.0.8010.12 with W500 recorded six favorite-save samples: 150.3, 17.1, 37.4, 37.3, 5.8 and 5.7 ms (median 27.2 ms). One outfit save took 78.4 ms. Storage-write calls themselves took 0.3–0.7 ms for those item samples. These observations do not confirm a persistence bottleneck, so no speculative store optimization was applied.
+
+This narrows the earlier 2.26-second observation: it was not a measurement of application persistence alone. Event-to-write completion does not measure subsequent rendering, full interaction readiness, item creation or performance on other devices. Load/search budgets and broader device measurements remain open.
+
+Input errors now expose `aria-invalid` and `aria-describedby`; outfit selection has a named group, associated error and pressed states; notices use alert/status semantics. Four focused browser tests pass after review, alongside 32 unit/store tests and lint/TypeScript. The integrated suite passed 26 Chromium cases before the final small caller-ARIA/UTF-8-byte-count corrections; the affected four cases were rerun afterward. This verifies DOM semantics and keyboard behavior, not actual screen-reader output or every browser.
+
+See [the dependency follow-up](DEPENDENCY_REVIEW.md) for the updated audit: zero reported production findings and five unresolved development-tool findings.
+
 ## Dependency review
 
 `npm audit --json` on the baseline reports 19 vulnerable packages: 1 critical, 14 high, 3 moderate, and 1 low. These are registry advisory matches, not proof that each exploit is reachable in this application.

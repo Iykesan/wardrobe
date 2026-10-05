@@ -122,10 +122,13 @@ export default function ItemForm({
           })}
         />
 
-        <label className="flex flex-col gap-1 text-sm text-muted">
+        <label className="flex flex-col gap-1 text-sm text-muted" htmlFor="item-category">
           <span className="font-medium text-ink">Category</span>
           <select
+            id="item-category"
             className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            aria-invalid={errors.categoryId ? true : undefined}
+            aria-describedby={errors.categoryId ? "item-category-error" : undefined}
             {...categoryRegister}
           >
             <option value="" disabled>
@@ -138,14 +141,19 @@ export default function ItemForm({
             ))}
           </select>
           {errors.categoryId?.message && (
-            <span className="text-xs text-danger">{errors.categoryId.message}</span>
+            <span id="item-category-error" role="alert" className="text-xs text-danger">
+              {errors.categoryId.message}
+            </span>
           )}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-muted">
+        <label className="flex flex-col gap-1 text-sm text-muted" htmlFor="item-subcategory">
           <span className="font-medium text-ink">Subcategory</span>
           <select
+            id="item-subcategory"
             className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            aria-invalid={errors.subcategoryId ? true : undefined}
+            aria-describedby={errors.subcategoryId ? "item-subcategory-error" : undefined}
             {...subcategoryRegister}
           >
             <option value="" disabled>
@@ -158,7 +166,7 @@ export default function ItemForm({
             ))}
           </select>
           {errors.subcategoryId?.message && (
-            <span className="text-xs text-danger">
+            <span id="item-subcategory-error" role="alert" className="text-xs text-danger">
               {errors.subcategoryId.message}
             </span>
           )}
