@@ -1,5 +1,13 @@
 # Phase 1 acceptance evidence
 
+## Latest integrated verification
+
+Candidate `cc674d3` (including dependency update `72a7d57`): `npm run check` passed lint, TypeScript and 32 unit/store tests; `npm run test:e2e` built production and passed all 26 Chromium tests. `npm audit --omit=dev` again reported zero findings. No deployed or GitHub run is implied.
+
+The integrated W500 event-to-write samples were 202.6, 43.3, 21.0, 32.9, 5.8 and 37.7 ms (median 35.3 ms); outfit save was 79.9 ms. These corroborate the focused observations below without proving full render latency or performance on other devices. Automated form associations, selection semantics and live-region checks pass. Actual screen-reader output and other browsers remain unverified.
+
+**Acceptance disposition:** core local reliability and the implemented automated cases pass. Do not mark the entire roadmap or release complete: five high development-tool advisories remain unresolved upstream, load/search budgets and broader device coverage are not approved, and GitHub/deployment verification is still pending. The earlier audit and timing sections below are historical baseline evidence; use this section and `DEPENDENCY_REVIEW.md` for the latest status.
+
 ## Candidate and scope
 
 Persistence implementation baseline: `c303d5b`. Parent verification ran `npm run check` and `npm run test:e2e`: lint and TypeScript passed, 32 unit/store tests passed, and 22 Chromium tests passed against the production build. This report is an acceptance audit, not a claim of production readiness. Full Phase 1 acceptance remains open for performance validation, remaining accessibility checks and dependency remediation.

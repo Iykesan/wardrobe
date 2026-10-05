@@ -74,7 +74,7 @@ Verification: 32 unit/store tests and 13 Chromium tests passed, including malfor
 
 ## Phase 1 acceptance audit
 
-See [the acceptance evidence](PHASE_1_ACCEPTANCE.md) for P1-01 through P1-12 coverage, limits, dependency review and W500 measurements. The expanded suite passes 32 unit/store and 22 Chromium cases. Full phase acceptance remains open: the measured save interaction exceeded one second, screen-reader/cross-browser accessibility needs further verification, and npm audit reports 19 unresolved findings. A passing functional suite is not performance or security clearance.
+See [the acceptance evidence](PHASE_1_ACCEPTANCE.md) for P1-01 through P1-12 coverage, limits, dependency review and W500 measurements. Integrated verification of `cc674d3` passes 32 unit/store and 26 Chromium cases, lint, TypeScript and the production build. Precise browser event-to-write measurements do not confirm the earlier suspected persistence bottleneck: six W500 favorite saves were 5.8–202.6 ms, with an outfit save at 79.9 ms. These are not full render or cross-device latency measurements. Form error associations and announcement semantics now have automated coverage. Full phase/release acceptance remains qualified: screen-reader and cross-browser checks, load/search budgets and broader device coverage remain open. Production audit reports zero findings; five development-only upstream lint-tool advisories remain unresolved. See [dependency review](DEPENDENCY_REVIEW.md).
 
 ## Follow-up priorities
 
