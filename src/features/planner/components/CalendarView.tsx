@@ -5,6 +5,7 @@ import { addDays, startOfDay } from "date-fns";
 import Button from "@/shared/components/common/Button";
 import OutfitVisual from "@/features/outfits/components/OutfitVisual";
 import { confirmAction } from "@/shared/lib/confirm";
+import { isValidDateOnly } from "@/shared/lib/dates";
 import { formatISODate, formatShortDate } from "@/shared/lib/utils";
 import type { Outfit, PlanEntry, WardrobeItem } from "@/shared/types";
 
@@ -137,6 +138,7 @@ export default function CalendarView({
               />
             </label>
 
+            {!isValidDateOnly(selectedDate) && <p role="alert" className="text-sm text-danger">Choose a valid calendar date.</p>}
             <Button
               type="button"
               onClick={() =>
@@ -146,7 +148,7 @@ export default function CalendarView({
                   description: description.trim() || undefined,
                 })
               }
-              disabled={!selectedOutfitId}
+              disabled={!selectedOutfitId || !isValidDateOnly(selectedDate)}
             >
               {currentPlan ? "Update plan" : "Schedule outfit"}
             </Button>

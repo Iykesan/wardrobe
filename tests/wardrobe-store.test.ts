@@ -34,6 +34,40 @@ async function addItem(name = "Owned shirt") {
   });
 }
 
+test("invalid relationships and dates leave persisted data unchanged", async () => {
+  await store.getState().seedDefaults();
+  const item = await addItem();
+  await store.getState().addOutfit({ itemIds: [item.id], isFavorite: false });
+  const before = storage.get("wardrope-store");
+  await assert.rejects(store.getState().addItem({ name: "Bad", categoryId: "missing", subcategoryId: item.subcategoryId }));
+  await assert.rejects(store.getState().addOutfit({ itemIds: [item.id, item.id], isFavorite: false }));
+  await assert.rejects(store.getState().addOutfit({ itemIds: ["missing"], isFavorite: false }));
+  await assert.rejects(store.getState().addPlan({ outfitId: "missing", plannedDate: "2035-06-15" }));
+  await assert.rejects(store.getState().addPlan({ outfitId: store.getState().outfits[0].id, plannedDate: "2035-02-29" }));
+  assert.equal(storage.get("wardrope-store"), before);
+});
+
+test("renaming categories and subcategories cannot create duplicate names", async () => {
+  await store.getState().seedDefaults();
+  const state = store.getState();
+  const before = storage.get("wardrope-store");
+  await assert.rejects(state.updateCategory(state.categories[1].id, ` ${state.categories[0].name.toUpperCase()} `));
+  const siblings = state.subcategories.filter((entry) => entry.categoryId === state.categories[0].id);
+  await assert.rejects(state.updateSubcategory(siblings[1].id, siblings[0].name));
+  await assert.rejects(state.addCategory("  "));
+  assert.equal(storage.get("wardrope-store"), before);
+});
+
+test("a 501st item is rejected without removing existing clothing", async () => {
+  await store.getState().seedDefaults();
+  const item = await addItem();
+  store.setState({ items: Array.from({ length: 500 }, (_, index) => ({ ...item, id: `item-${index}` })) });
+  const before = storage.get("wardrope-store");
+  await assert.rejects(addItem(), /500/);
+  assert.equal(store.getState().items.length, 500);
+  assert.equal(storage.get("wardrope-store"), before);
+});
+
 test("default setup creates categories but never clothing or outfits", async () => {
   await store.getState().seedDefaults();
   assert.equal(store.getState().setupComplete, true);

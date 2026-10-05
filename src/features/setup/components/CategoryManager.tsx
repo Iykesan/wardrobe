@@ -32,6 +32,12 @@ export default function CategoryManager({
   onUpdateSubcategory,
   onRemoveSubcategory,
 }: CategoryManagerProps) {
+  const [actionError, setActionError] = useState<string>();
+  const run = async (operation: () => void | Promise<void>, success?: () => void) => {
+    setActionError(undefined);
+    try { await operation(); success?.(); }
+    catch (error) { setActionError(error instanceof Error ? error.message : "Unable to save changes."); }
+  };
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>({});
   const [subcategoryEdits, setSubcategoryEdits] = useState<Record<string, string>>(
@@ -50,15 +56,15 @@ export default function CategoryManager({
   const handleCategorySave = async (category: Category) => {
     const draft = categoryEdits[category.id] ?? category.name;
     if (normalizeText(draft) === normalizeText(category.name)) return;
-    await onUpdateCategory(category.id, draft);
-    setCategoryEdits((prev) => ({ ...prev, [category.id]: draft.trim() }));
+    await run(() => onUpdateCategory(category.id, draft), () =>
+      setCategoryEdits((prev) => ({ ...prev, [category.id]: draft.trim() })));
   };
 
   const handleSubcategorySave = async (subcategory: Subcategory) => {
     const draft = subcategoryEdits[subcategory.id] ?? subcategory.name;
     if (normalizeText(draft) === normalizeText(subcategory.name)) return;
-    await onUpdateSubcategory(subcategory.id, draft);
-    setSubcategoryEdits((prev) => ({ ...prev, [subcategory.id]: draft.trim() }));
+    await run(() => onUpdateSubcategory(subcategory.id, draft), () =>
+      setSubcategoryEdits((prev) => ({ ...prev, [subcategory.id]: draft.trim() })));
   };
 
   return (
@@ -80,8 +86,7 @@ export default function CategoryManager({
               type="button"
               variant="secondary"
               onClick={async () => {
-                await onAddCategory(newCategoryName);
-                setNewCategoryName("");
+                await run(() => onAddCategory(newCategoryName), () => setNewCategoryName(""));
               }}
             >
               Add
@@ -90,6 +95,7 @@ export default function CategoryManager({
         </div>
       </div>
 
+      {actionError && <p role="alert" className="text-sm text-danger">{actionError}</p>}
       {error && (
         <div className="rounded-[var(--radius-card)] border border-danger/40 bg-danger/10 px-4 py-3 text-xs text-danger">
           <div className="flex items-start justify-between gap-4">
@@ -161,7 +167,7 @@ export default function CategoryManager({
                             "Delete this category? Items in it will be removed and outfits/plans updated.",
                           )
                         ) {
-                          onRemoveCategory(category.id);
+                          void run(() => onRemoveCategory(category.id));
                         }
                       }}
                     >
@@ -229,7 +235,7 @@ export default function CategoryManager({
                                     "Delete this subcategory? Items will move to the default subcategory.",
                                   )
                                 ) {
-                                  onRemoveSubcategory(subcategory.id);
+                                  void run(() => onRemoveSubcategory(subcategory.id));
                                 }
                               }}
                             >
@@ -267,11 +273,8 @@ export default function CategoryManager({
                         variant="secondary"
                         onClick={async () => {
                           const draft = newSubcategoryName[category.id] ?? "";
-                          await onAddSubcategory(category.id, draft);
-                          setNewSubcategoryName((prev) => ({
-                            ...prev,
-                            [category.id]: "",
-                          }));
+                          await run(() => onAddSubcategory(category.id, draft), () =>
+                            setNewSubcategoryName((prev) => ({ ...prev, [category.id]: "" })));
                         }}
                       >
                         Add

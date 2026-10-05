@@ -2,6 +2,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { validateWardrobeData } from "@/features/wardrobe/domain/validation";
+import { MAX_ITEMS } from "@/shared/config/constants";
 import { defaultCategorySeeds } from "@/features/setup/seeds";
 import { createId, normalizeText, sortByOrder } from "@/shared/lib/utils";
 import type {
@@ -64,7 +66,19 @@ const findDefaultSubcategory = (
 
 export const useWardrobeStore = create<WardrobeState>()(
   persist(
-    (set, get) => ({
+    (publish, get) => {
+      const set: typeof publish = (partial) => {
+        const current = get();
+        const patch = typeof partial === "function" ? partial(current) : partial;
+        const changesData = ["categories", "subcategories", "items", "outfits", "plans", "setupComplete"].some((key) => key in patch);
+        if (!changesData) { publish(patch); return; }
+        const next = validateWardrobeData({ ...current, ...patch });
+        if (next.items.length > MAX_ITEMS && next.items.length > current.items.length) {
+          throw new Error(`Your wardrobe is limited to ${MAX_ITEMS} items.`);
+        }
+        publish({ ...next, error: undefined });
+      };
+      return ({
       isHydrated: false,
       isLoading: false,
       categories: [],
@@ -108,18 +122,14 @@ export const useWardrobeStore = create<WardrobeState>()(
       },
       addCategory: async (name) => {
         const trimmed = name.trim();
-        if (!trimmed) {
-          set({ error: "Category name cannot be empty." });
-          return;
-        }
+        if (!trimmed) throw new Error("Category name cannot be empty.");
         if (
           get().categories.some(
             (category) =>
               normalizeText(category.name) === normalizeText(trimmed),
           )
         ) {
-          set({ error: "That category already exists." });
-          return;
+          throw new Error("That category already exists.");
         }
         const category: Category = {
           id: createId(),
@@ -139,10 +149,7 @@ export const useWardrobeStore = create<WardrobeState>()(
       },
       updateCategory: async (id, name) => {
         const trimmed = name.trim();
-        if (!trimmed) {
-          set({ error: "Category name cannot be empty." });
-          return;
-        }
+        if (!trimmed) throw new Error("Category name cannot be empty.");
         set((state) => ({
           categories: state.categories.map((category) =>
             category.id === id ? { ...category, name: trimmed } : category,
@@ -193,10 +200,7 @@ export const useWardrobeStore = create<WardrobeState>()(
       },
       addSubcategory: async (categoryId, name) => {
         const trimmed = name.trim();
-        if (!trimmed) {
-          set({ error: "Subcategory name cannot be empty." });
-          return;
-        }
+        if (!trimmed) throw new Error("Subcategory name cannot be empty.");
         if (
           get().subcategories.some(
             (subcategory) =>
@@ -204,8 +208,7 @@ export const useWardrobeStore = create<WardrobeState>()(
               normalizeText(subcategory.name) === normalizeText(trimmed),
           )
         ) {
-          set({ error: "That subcategory already exists." });
-          return;
+          throw new Error("That subcategory already exists.");
         }
         const order =
           get().subcategories.filter(
@@ -223,10 +226,7 @@ export const useWardrobeStore = create<WardrobeState>()(
       },
       updateSubcategory: async (id, name) => {
         const trimmed = name.trim();
-        if (!trimmed) {
-          set({ error: "Subcategory name cannot be empty." });
-          return;
-        }
+        if (!trimmed) throw new Error("Subcategory name cannot be empty.");
         set((state) => ({
           subcategories: state.subcategories.map((subcategory) =>
             subcategory.id === id ? { ...subcategory, name: trimmed } : subcategory,
@@ -373,7 +373,8 @@ export const useWardrobeStore = create<WardrobeState>()(
           plans: state.plans.filter((plan) => plan.id !== id),
         }));
       },
-    }),
+    });
+    },
     {
       name: "wardrope-store",
       partialize: (state) => ({

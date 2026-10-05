@@ -51,12 +51,16 @@ export default function OutfitBuilder({
       return;
     }
     setError(undefined);
-    await onSave({
-      name: name.trim() || undefined,
-      itemIds: selectedIds,
-      isFavorite,
-    });
-    onClose();
+    try {
+      await onSave({
+        name: name.trim() || undefined,
+        itemIds: selectedIds,
+        isFavorite,
+      });
+      onClose();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to save outfit.");
+    }
   };
 
   return (
@@ -129,7 +133,7 @@ export default function OutfitBuilder({
               );
             })}
           </div>
-          {error && <span className="text-xs text-danger">{error}</span>}
+          {error && <span role="alert" className="text-xs text-danger">{error}</span>}
         </div>
 
         <div className="flex justify-end gap-3">

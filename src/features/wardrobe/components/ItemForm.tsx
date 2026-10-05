@@ -48,7 +48,7 @@ export default function ItemForm({
     setError,
     setValue,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ItemFormValues>({
     defaultValues: {
       name: initial?.name ?? "",
@@ -93,8 +93,12 @@ export default function ItemForm({
       });
       return;
     }
-    await onSave(result.data);
-    onClose();
+    try {
+      await onSave(result.data);
+      onClose();
+    } catch (error) {
+      setError("root", { message: error instanceof Error ? error.message : "Unable to save item." });
+    }
   });
 
   return (
@@ -194,11 +198,12 @@ export default function ItemForm({
           )}
         </div>
 
+        {errors.root && <p role="alert" className="text-sm text-danger">{errors.root.message}</p>}
         <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">{initial ? "Save changes" : "Save item"}</Button>
+          <Button type="submit" disabled={isSubmitting}>{initial ? "Save changes" : "Save item"}</Button>
         </div>
       </form>
     </Modal>

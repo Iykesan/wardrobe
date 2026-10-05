@@ -60,6 +60,14 @@ Use a separate browser profile or test origin. Do not clear a real wardrobe to r
 - [ ] Populate 500 items in an isolated test profile and measure listing, filtering, and saving. Record device/browser and timings; the original performance targets are not yet verified.
 - [ ] On the deployed build, confirm retired `/api/bootstrap` and mutation routes no longer exist. Removing them locally does not secure an older deployment.
 
+## Phase 1 implementation progress
+
+First increment: domain writes now validate references, duplicate IDs, category/subcategory name uniqueness, nonempty outfits, unique outfit pieces, and one plan per valid calendar date. New additions are limited to 500 items; this is not a measured performance result. Calendar-date display uses local date-only parsing rather than UTC timestamp parsing. Today and past dates are permitted so historical plans remain editable. Forms retain drafts when these validations reject writes.
+
+Verification for this increment: `npm run check` passed 11 unit/store tests plus lint and TypeScript; `npm run test:e2e` passed the four existing Chromium cases against a production build. New tests cover rejected invalid relationships/dates with unchanged saved bytes, duplicate renames, the 501st item, leap dates, and formatting in UTC, America/Los_Angeles and Asia/Tokyo. This is partial P1-03/P1-04/P1-05/P1-11 coverage, not full Phase 1 acceptance.
+
+Still required: versioned persistence, malformed-data recovery, atomic write failure handling, backup/restore, multi-tab conflict protection, planner hydration/midnight behavior, remaining browser cases, and measured 500-item performance. Existing invalid legacy graphs are not repaired by the new write validator; recovery must preserve their original bytes.
+
 ## Follow-up priorities
 
 1. Extend the passing Chromium suite with the remaining browser checks before expanding features.

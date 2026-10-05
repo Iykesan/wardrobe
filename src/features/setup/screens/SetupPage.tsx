@@ -106,8 +106,12 @@ export default function SetupPage() {
         });
       });
     });
-    await completeSetup(categories, subcategories);
-    router.push("/wardrobe");
+    try {
+      await completeSetup(categories, subcategories);
+      router.push("/wardrobe");
+    } catch (error) {
+      setSetupError(error instanceof Error ? error.message : "Unable to complete setup.");
+    }
   };
 
   return (
@@ -223,8 +227,12 @@ export default function SetupPage() {
                 type="button"
                 variant="secondary"
                 onClick={async () => {
-                  await seedDefaults();
-                  router.push("/wardrobe");
+                  try {
+                    await seedDefaults();
+                    router.push("/wardrobe");
+                  } catch (error) {
+                    setSetupError(error instanceof Error ? error.message : "Unable to complete setup.");
+                  }
                 }}
               >
                 Use defaults
