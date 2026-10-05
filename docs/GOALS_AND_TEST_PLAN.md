@@ -66,6 +66,12 @@ Use a separate browser profile or test origin. Do not clear a real wardrobe to r
 4. Review dependency audit findings and update compatible packages in a dedicated change, with the same checks. The initial install reported vulnerabilities; a passing build is not a security audit.
 5. Consider authenticated cloud sync only as a separate project: verified user sessions, versioned database migrations, ownership constraints, transactional writes, and cross-user denial tests must come before deployment. Never trust a user ID supplied by the browser as authentication.
 
+## Planned expansion: personalized avatars and 3D clothing
+
+See [the avatar and 3D wardrobe feature plan](AVATAR_AND_3D_WARDROBE_PLAN.md). The goal is a customizable avatar for each user, including skin tone, hair, height, and body proportions, with 3D representations of their clothing that can be combined into outfit previews.
+
+This is planned work, not an implemented feature. Begin with one local profile and a small template-based prototype; preserve the long-term goal of all-item coverage while explicitly showing unsupported items. Per-user accounts, item-specific reconstruction, and accurate fit/fabric simulation require separate stages. The plan defines customization, asset creation, storage, privacy, compatibility, and test requirements. Existing manual entry and local reliability remain prerequisites for production integration.
+
 ## Working with agents and Git
 
 Use small changes with explicit acceptance checks. Record what changed, which checks passed, and what is still untested. Commit source and tests together with descriptive messages; do not mark unchecked milestones complete. Keep secrets and generated session files out of Git. Use a pull request for review and require checks on the protected branch once GitHub access is restored.
