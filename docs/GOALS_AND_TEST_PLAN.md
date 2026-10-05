@@ -66,7 +66,9 @@ First increment: domain writes now validate references, duplicate IDs, category/
 
 Verification for this increment: `npm run check` passed 11 unit/store tests plus lint and TypeScript; `npm run test:e2e` passed the four existing Chromium cases against a production build. New tests cover rejected invalid relationships/dates with unchanged saved bytes, duplicate renames, the 501st item, leap dates, and formatting in UTC, America/Los_Angeles and Asia/Tokyo. This is partial P1-03/P1-04/P1-05/P1-11 coverage, not full Phase 1 acceptance.
 
-Still required: versioned persistence, malformed-data recovery, atomic write failure handling, backup/restore, multi-tab conflict protection, planner hydration/midnight behavior, remaining browser cases, and measured 500-item performance. Existing invalid legacy graphs are not repaired by the new write validator; recovery must preserve their original bytes.
+Planner follow-up: saved fields are derived from hydrated plan data until the user edits a draft; the upcoming calendar refreshes at midnight and on focus/visibility changes without replacing draft text. Added three browser cases for UTC, America/Los_Angeles and Asia/Tokyo covering saved fields, date labels, empty-date rejection, midnight refresh, and unsaved-draft preservation. Verification now passes 11 unit/store tests and seven Chromium tests.
+
+Still required: versioned persistence, malformed-data recovery, atomic write failure handling, backup/restore, multi-tab conflict protection, remaining browser cases, and measured 500-item performance. Existing invalid legacy graphs are not repaired by the new write validator; recovery must preserve their original bytes.
 
 ## Follow-up priorities
 

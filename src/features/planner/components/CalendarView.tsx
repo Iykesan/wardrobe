@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { addDays, startOfDay } from "date-fns";
 import Button from "@/shared/components/common/Button";
 import OutfitVisual from "@/features/outfits/components/OutfitVisual";
 import { confirmAction } from "@/shared/lib/confirm";
-import { isValidDateOnly } from "@/shared/lib/dates";
+import { calendarDate, isValidDateOnly } from "@/shared/lib/dates";
 import { formatISODate, formatShortDate } from "@/shared/lib/utils";
 import type { Outfit, PlanEntry, WardrobeItem } from "@/shared/types";
 
@@ -28,18 +28,33 @@ export default function CalendarView({
   onAddPlan,
   onRemovePlan,
 }: CalendarViewProps) {
-  const todayIso = useMemo(() => formatISODate(new Date()), []);
-  const initialPlan = plans.find((plan) => plan.plannedDate === todayIso);
+  const [todayIso, setTodayIso] = useState(() => formatISODate(new Date()));
   const [selectedDate, setSelectedDate] = useState(todayIso);
-  const [selectedOutfitId, setSelectedOutfitId] = useState(
-    initialPlan?.outfitId ?? "",
-  );
-  const [description, setDescription] = useState(initialPlan?.description ?? "");
+  const [draft, setDraft] = useState<{ outfitId: string; description: string } | null>(null);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = () => {
+      setTodayIso(formatISODate(new Date()));
+      clearTimeout(timer);
+      const nextDay = addDays(startOfDay(new Date()), 1);
+      timer = setTimeout(refresh, Math.max(1, nextDay.getTime() - Date.now()));
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
 
   const upcomingDays = useMemo(() => {
-    const today = startOfDay(new Date());
+    const today = calendarDate(todayIso);
     return Array.from({ length: 7 }, (_, index) => addDays(today, index));
-  }, []);
+  }, [todayIso]);
 
   const planByDate = useMemo(() => {
     const map = new Map<string, PlanEntry>();
@@ -54,6 +69,10 @@ export default function CalendarView({
   }, [items]);
 
   const currentPlan = planByDate.get(selectedDate);
+  const selectedOutfitId = draft?.outfitId ?? currentPlan?.outfitId ?? "";
+  const description = draft?.description ?? currentPlan?.description ?? "";
+  const changeDraft = (change: Partial<NonNullable<typeof draft>>) =>
+    setDraft({ outfitId: selectedOutfitId, description, ...change });
   const upcomingPlans = useMemo(
     () =>
       plans
@@ -65,34 +84,30 @@ export default function CalendarView({
 
   const handleDateChange = (value: string) => {
     setSelectedDate(value);
-    const plan = planByDate.get(value);
-    if (plan) {
-      setSelectedOutfitId(plan.outfitId);
-      setDescription(plan.description ?? "");
-    } else {
-      setSelectedOutfitId("");
-      setDescription("");
-    }
+    setDraft(null);
+    setError(undefined);
   };
 
   const handleRemovePlan = async (id: string) => {
     if (!confirmAction("Remove this plan?")) return;
     const removed = plans.find((plan) => plan.id === id);
-    await onRemovePlan(id);
-    if (removed?.plannedDate === selectedDate) {
-      setSelectedOutfitId("");
-      setDescription("");
+    try {
+      await onRemovePlan(id);
+      if (removed?.plannedDate === selectedDate) setDraft(null);
+      setError(undefined);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to remove plan.");
     }
   };
 
   const handleEditPlan = (plan: PlanEntry) => {
     setSelectedDate(plan.plannedDate);
-    setSelectedOutfitId(plan.outfitId);
-    setDescription(plan.description ?? "");
+    setDraft(null);
   };
 
   return (
     <div className="flex flex-col gap-6">
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-border bg-white/80 p-5">
           <div>
@@ -118,7 +133,7 @@ export default function CalendarView({
               <select
                 className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 value={selectedOutfitId}
-                onChange={(event) => setSelectedOutfitId(event.target.value)}
+                onChange={(event) => changeDraft({ outfitId: event.target.value })}
               >
                 <option value="">Select an outfit</option>
                 {outfits.map((outfit) => (
@@ -134,20 +149,26 @@ export default function CalendarView({
               <textarea
                 className="min-h-[88px] rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                onChange={(event) => changeDraft({ description: event.target.value })}
               />
             </label>
 
             {!isValidDateOnly(selectedDate) && <p role="alert" className="text-sm text-danger">Choose a valid calendar date.</p>}
             <Button
               type="button"
-              onClick={() =>
-                onAddPlan({
-                  plannedDate: selectedDate,
-                  outfitId: selectedOutfitId,
-                  description: description.trim() || undefined,
-                })
-              }
+              onClick={async () => {
+                try {
+                  await onAddPlan({
+                    plannedDate: selectedDate,
+                    outfitId: selectedOutfitId,
+                    description: description.trim() || undefined,
+                  });
+                  setDraft(null);
+                  setError(undefined);
+                } catch (error) {
+                  setError(error instanceof Error ? error.message : "Unable to save plan.");
+                }
+              }}
               disabled={!selectedOutfitId || !isValidDateOnly(selectedDate)}
             >
               {currentPlan ? "Update plan" : "Schedule outfit"}
