@@ -72,6 +72,10 @@ Persistence increment: version 1 envelopes preserve the `wardrope-store` key; va
 
 Verification: 32 unit/store tests and 13 Chromium tests passed, including malformed/future data, quota failures, blocked reads, backup round-trip/cancellation and stale-tab rejection. Full Phase 1 acceptance still needs the remaining mutation failure/browser cases, measured 500-item performance, and dependency review. Existing invalid legacy graphs are not auto-repaired; their original bytes remain available for recovery.
 
+## Phase 1 acceptance audit
+
+See [the acceptance evidence](PHASE_1_ACCEPTANCE.md) for P1-01 through P1-12 coverage, limits, dependency review and W500 measurements. The expanded suite passes 32 unit/store and 22 Chromium cases. Full phase acceptance remains open: the measured save interaction exceeded one second, screen-reader/cross-browser accessibility needs further verification, and npm audit reports 19 unresolved findings. A passing functional suite is not performance or security clearance.
+
 ## Follow-up priorities
 
 1. Extend the passing Chromium suite with the remaining browser checks before expanding features.

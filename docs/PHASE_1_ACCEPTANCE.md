@@ -1,0 +1,57 @@
+# Phase 1 acceptance evidence
+
+## Candidate and scope
+
+Persistence implementation baseline: `c303d5b`. Parent verification ran `npm run check` and `npm run test:e2e`: lint and TypeScript passed, 32 unit/store tests passed, and 22 Chromium tests passed against the production build. This report is an acceptance audit, not a claim of production readiness. Full Phase 1 acceptance remains open for performance validation, remaining accessibility checks and dependency remediation.
+
+## Acceptance matrix
+
+| Cases | Evidence | Limits |
+| --- | --- | --- |
+| P1-01 | Existing manual-entry, search, favorites/reload workflow | Chromium desktop only. |
+| P1-02 | Store cascades and new browser category deletion preserving unrelated records | Tested fixture combinations, not all possible graphs. |
+| P1-03 | Store invalid-reference, duplicate outfit item, invalid plan and unchanged-byte tests | Validation is exercised directly at the store boundary. |
+| P1-04 | Setup duplicates, blank/duplicate renames and retained drafts in browser | Existing same-name update is a safe UI no-op. |
+| P1-05–06 | Unit leap-date/timezone tests and browser UTC/Los_Angeles/Tokyo hydration, midnight and draft tests | Historical dates deliberately allowed. |
+| P1-07 | Legacy migration, malformed/future-version, invalid graph and raw-byte preservation tests | No automatic repair of invalid historical graphs. |
+| P1-08 | Browser quota failures for create/edit/delete/favorite/restore, blocked reads; unit missing-lock and compare-before-write tests | No guarantee against older tabs running code that ignores Web Locks. |
+| P1-09 | Export/restore round trip, explicit preview, invalid import and cancellation tests | Replacement, not merge; maximum import is 5 MiB. |
+| P1-10 | Different-record and same-record stale-tab tests preserve the winning write | Conflict policy blocks/reloads; it does not merge edits. |
+| P1-11 | W500 browser fixture and 501st-item rejection | Measurement collected; performance acceptance not established. |
+| P1-12 | Keyboard item/outfit submission, required-field errors, Tab/Shift+Tab and item Escape/focus return | Visible error text is tested, not a screen-reader audit; complete programmatic error association and cross-browser checks remain. |
+
+Executable evidence is in `tests/wardrobe-store.test.ts`, `tests/wardrobe-persistence.test.ts`, `tests/dates.test.ts`, and `tests/e2e/{workflows,planner,persistence,acceptance}.spec.ts`. Shared W1/W500 fixtures are in `tests/e2e/fixtures/wardrobe-fixtures.ts`.
+
+## W500 measurement
+
+Parent run: Chromium 153.0.8010.12, MacIntel platform, 1280×720 viewport, DPR 1, four reported logical processors, America/New_York timezone, two test workers. The emulated Desktop Chrome user-agent says Windows; this is not evidence of a Windows host. Fixture: 500 items, 50 outfits, 30 plans, approximately 132 KB serialized data.
+
+| Operation | Observed wall-clock duration |
+| --- | ---: |
+| Cold route load to rendered count | 1,392 ms |
+| Search to rendered result | 477 ms |
+| Favorite click to observed persisted state | 2,262 ms |
+| Reload to rendered count | 1,207 ms |
+
+These are single-run end-to-end timings including Playwright actionability/polling and concurrent test load. They are not isolated storage timings or percentile measurements. The save observation exceeds one second, so it cannot substantiate the original save-latency goal. The test records measurements without a performance assertion; its green status only certifies the functional steps. Follow up with browser-side event-to-persistence instrumentation, repeated isolated runs, and separately approved load/search budgets before granting P1-11 acceptance.
+
+## Dependency review
+
+`npm audit --json` on the baseline reports 19 vulnerable packages: 1 critical, 14 high, 3 moderate, and 1 low. These are registry advisory matches, not proof that each exploit is reachable in this application.
+
+- `next` is pinned to 16.1.1. Audit proposes 16.3.8 as a fix; it must be checked for compatibility with React, deployment and the build pipeline before adoption.
+- `postcss` and `sharp` are also reported high-severity through the Next.js dependency graph.
+- Development tooling findings include `eslint-config-next`, glob/matching libraries, YAML parsing and other transitive dependencies. Audit proposes a major-version downgrade for some lint-tooling paths; do not apply `npm audit fix --force` blindly.
+- The app has no custom rewrites, account middleware, Server Actions or image-upload workflow in its current source, which limits applicability of some listed advisories. It still runs a Next.js server; absence of these app features is not a blanket security clearance.
+
+Recommended disposition: a separate coordinated framework/lint dependency update, followed by a fresh audit, clean installation, full tests, production build and deployment smoke checks. Keep the release blocked on resolving or explicitly accepting each applicable advisory.
+
+Representative primary advisory references from the registry report:
+
+- [Next.js HTTP deserialization denial of service](https://github.com/advisories/GHSA-h25m-26qc-wcjf)
+- [Next.js Windows-hosted server remote code execution](https://github.com/advisories/GHSA-p293-qw3h-jr36)
+- [Next.js AVIF image optimization remote code execution](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4)
+- [PostCSS source-map file disclosure](https://github.com/advisories/GHSA-fxqj-rqcc-2cmp)
+- [sharp inherited image-library vulnerabilities](https://github.com/advisories/GHSA-f88m-g3jw-g9cj)
+
+No dependency versions were changed by this review.
