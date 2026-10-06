@@ -86,6 +86,8 @@ See [the acceptance evidence](PHASE_1_ACCEPTANCE.md) for P1-01 through P1-12 cov
 4. Obtain user approval before pushing or deploying, then record GitHub and deployment evidence. The earlier authentication blocker has not been rechecked.
 5. Consider authenticated cloud sync only as a separate project: verified user sessions, versioned database migrations, ownership constraints, transactional writes, and cross-user denial tests must come before deployment. Never trust a user ID supplied by the browser as authentication.
 
+The fresh audit follow-up after `e0c2e1e` fixed an additional source-map-js advisory with a lockfile-only 1.2.2 update. Lint, TypeScript, 32 unit/store tests, the production build and 26 Chromium tests passed again; production audit returned to zero findings. The five high braces-chain findings persist, with latest braces still 3.0.3. Task #15 remains paused for that specific blocker, not for completed updates. See [dependency review](DEPENDENCY_REVIEW.md).
+
 ### Task-history reconciliation at `da65d11`
 
 Saved task history in `.pi/tasks/` records Task #15 as in progress and paused after the dependency update; Task #16 (save timing and accessible errors, `cc674d3`) and Task #17 (integrated verification and evidence, `da65d11`) are completed. The unfinished status of Task #15 does not mean its completed dependency updates should be repeated. The audit results are historical, not a fresh registry check. No advisory waiver or full Phase 1/release approval is recorded. Keep the saved history local rather than creating a duplicate implementation plan.

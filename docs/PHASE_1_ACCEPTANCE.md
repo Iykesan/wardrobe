@@ -2,6 +2,10 @@
 
 ## Latest integrated verification
 
+After reconciliation at `e0c2e1e`, a fresh audit identified and a lockfile-only update fixed `source-map-js@1.2.1` by upgrading to 1.2.2. On that updated candidate, `npm run check` passed lint, TypeScript and 32 unit/store tests; `npm run test:e2e` built production and passed all 26 Chromium cases. The fresh production audit reports zero findings; five high development-tool findings remain. See [dependency review](DEPENDENCY_REVIEW.md). The acceptance limits below remain unchanged.
+
+## Previous integrated verification
+
 Candidate `cc674d3` (including dependency update `72a7d57`): `npm run check` passed lint, TypeScript and 32 unit/store tests; `npm run test:e2e` built production and passed all 26 Chromium tests. `npm audit --omit=dev` again reported zero findings. No deployed or GitHub run is implied.
 
 The integrated W500 event-to-write samples were 202.6, 43.3, 21.0, 32.9, 5.8 and 37.7 ms (median 35.3 ms); outfit save was 79.9 ms. These corroborate the focused observations below without proving full render latency or performance on other devices. Automated form associations, selection semantics and live-region checks pass. Actual screen-reader output and other browsers remain unverified.
