@@ -36,7 +36,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 | ID / method | Setup and steps | Expected result |
 | --- | --- | --- |
 | P1-01 / browser | Start with W0; complete category setup; add clothing with only required fields; edit it; filter/search; favorite and reload. | No clothes are seeded. Entered data and favorites persist; optional details are not invented. Existing partial coverage: `tests/e2e/workflows.spec.ts`, manual clothing test. |
-| P1-02 / unit + browser | Use W1; remove one piece from the two-item outfit, then its last piece; separately remove its entire category. | Remaining pieces survive; empty outfits and their plans disappear; unrelated records stay unchanged. Store and item-deletion browser coverage exists; browser category deletion is planned. |
+| P1-02 / unit + browser | Use W1; remove one piece from the two-item outfit, then its last piece; separately remove its entire category. | Remaining pieces survive; empty outfits and their plans disappear; unrelated records stay unchanged. Store and Chromium item/category-deletion coverage exists; see the Phase 1 acceptance evidence. |
 | P1-03 / unit | Attempt to save items with nonexistent/mismatched categories, outfits with missing/duplicate item IDs, and plans with nonexistent outfits. | Invalid writes are rejected with actionable errors; the prior state and persisted payload remain unchanged. |
 | P1-04 / unit + browser | Create and rename categories/subcategories to whitespace-only and case/whitespace variants of existing names; include duplicate setup drafts. | Empty/duplicate names are rejected consistently; renaming to the same valid name is safe; failed edits preserve the draft for correction. |
 | P1-05 / unit + browser | Schedule `2035-06-15` in UTC, America/Los_Angeles, and Asia/Tokyo; include valid leap day, invalid leap day, and an empty date. | Valid dates retain the same calendar day; invalid dates cannot be saved. Explicitly settle whether today/past dates are allowed, then test that policy. |
@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-The current suite contains six store tests in `tests/wardrobe-store.test.ts` and four Chromium cases in `tests/e2e/workflows.spec.ts`. They cover parts of P1-01, P1-02, P1-12 and the local subset of P2-03, plus outfit favorites and plan replacement/removal. They do **not** establish that any future avatar, account or fit case passes.
+The latest recorded integrated suite passes 32 unit/store tests and 26 Chromium cases. See [Phase 1 acceptance evidence](PHASE_1_ACCEPTANCE.md) for the P1-01–P1-12 coverage matrix, candidate commit, measurements and remaining limits. Local retired-route tests cover part of P2-03. These results do **not** establish full performance/accessibility acceptance, a verified release, or that any future avatar, account or fit case passes.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 

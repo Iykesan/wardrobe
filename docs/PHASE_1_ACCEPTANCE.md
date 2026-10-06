@@ -26,7 +26,7 @@ Persistence implementation baseline: `c303d5b`. Parent verification ran `npm run
 | P1-09 | Export/restore round trip, explicit preview, invalid import and cancellation tests | Replacement, not merge; maximum import is 5 MiB. |
 | P1-10 | Different-record and same-record stale-tab tests preserve the winning write | Conflict policy blocks/reloads; it does not merge edits. |
 | P1-11 | W500 browser fixture and 501st-item rejection | Measurement collected; performance acceptance not established. |
-| P1-12 | Keyboard item/outfit submission, required-field errors, Tab/Shift+Tab and item Escape/focus return | Visible error text is tested, not a screen-reader audit; complete programmatic error association and cross-browser checks remain. |
+| P1-12 | Keyboard item/outfit submission, required-field errors, Tab/Shift+Tab and item Escape/focus return | Automated error associations and announcement semantics pass; actual screen-reader output and cross-browser checks remain unverified. |
 
 Executable evidence is in `tests/wardrobe-store.test.ts`, `tests/wardrobe-persistence.test.ts`, `tests/dates.test.ts`, and `tests/e2e/{workflows,planner,persistence,acceptance}.spec.ts`. Shared W1/W500 fixtures are in `tests/e2e/fixtures/wardrobe-fixtures.ts`.
 

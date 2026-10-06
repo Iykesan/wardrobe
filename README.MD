@@ -50,7 +50,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser suite builds and serves the production app on port 3100 with isolated browser contexts. It covers setup, manual clothing entry/editing/filtering, favorites and reloads, outfit editing, plan replacement/removal, deletion cleanup, keyboard dialog behavior, and retired API responses. It does not use your normal browser profile. Date edge cases, other browsers, storage failures, and 500-item performance remain unverified.
+The browser suite builds and serves the production app on port 3100 with isolated browser contexts. It covers setup, manual clothing entry/editing/filtering, favorites and reloads, outfit editing, plan replacement/removal, deletion cleanup, keyboard dialog behavior, and retired API responses. It does not use your normal browser profile. Date edge cases, storage failures, and W500 save timing also have automated evidence; see [Phase 1 acceptance](docs/PHASE_1_ACCEPTANCE.md). Screen-reader output, other browsers, approved load/search budgets, and broader device performance remain unverified.
 
 ## Git and GitHub
 

@@ -19,7 +19,7 @@ Keep the existing Next.js feature-oriented structure. Route files should compose
 | 1. Reduce scope | Remove Supabase APIs, clients, dependency, and auto-add suggestions; preserve saved browser data. | No remote or suggestion imports in runtime source; production build succeeds; hydration regression passes with `wardrope-store`. | Implemented in this refactor; verify with the commands below. |
 | 2. Protect data relationships | Category/item deletion must not leave empty outfits or plans pointing to removed outfits. Removing the last subcategory must reassign its items. | Automated store regression tests, including removal of a category containing multiple pieces of one outfit. | Automated coverage added. |
 | 3. Verify user workflows | Complete setup, item editing, outfits, favorites, and planning with mouse and keyboard. | Browser checks below, ideally automated with Playwright. | Chromium coverage added for core flows and item-dialog keyboard behavior; remaining checks listed below. |
-| 4. Improve local reliability | Handle unavailable/full storage visibly; validate persisted data; support a deliberate backup and restore workflow. | Tests for malformed data, quota failures, backups, and reloads. No silent data loss. | Planned, not implemented. |
+| 4. Improve local reliability | Handle unavailable/full storage visibly; validate persisted data; support a deliberate backup and restore workflow. | Tests for malformed data, quota failures, backups, and reloads. No silent data loss. | Implemented and locally verified; see the Phase 1 acceptance audit below for evidence and remaining limits. |
 | 5. Release deliberately | Run checks in GitHub, review changes, and verify the deployed app before calling the release complete. | Passing GitHub Actions run and deployment smoke checks. | Blocked on GitHub authentication and push; deployment not verified. |
 
 ## Automated checks
@@ -28,7 +28,7 @@ Keep the existing Next.js feature-oriented structure. Route files should compose
 
 Run `npm ci`, `npm run check`, and `npm run test:e2e` from the repository root. Install Chromium first with `npx playwright install chromium` (use `--with-deps` on Linux). The browser suite builds the production app before starting its isolated server. GitHub Actions runs these checks on Node.js 22.
 
-`tests/e2e/workflows.spec.ts` has four passing Chromium tests for manual clothing workflows, outfit/planner workflows, item-dialog keyboard behavior, and retired API responses. `npm run check` also passes all six store tests. These results do not establish that a GitHub run or deployment has passed.
+The latest recorded integrated verification passes 32 unit/store tests and 26 Chromium cases, plus lint, TypeScript and the production build. See [Phase 1 acceptance evidence](PHASE_1_ACCEPTANCE.md) for scope and limits. These historical results do not establish that a GitHub run or deployment has passed.
 
 `tests/wardrobe-store.test.ts` covers:
 
@@ -39,7 +39,7 @@ Run `npm ci`, `npm run check`, and `npm run test:e2e` from the repository root. 
 - Removing the last subcategory creates a replacement and reassigns clothing.
 - Outfit favorites are persisted, scheduling twice on one date replaces the assignment, and outfit deletion removes its plans without deleting clothes.
 
-These tests use an in-memory implementation of browser storage. They do not establish browser rendering, keyboard accessibility, storage-quota handling, or 500-item performance.
+These store tests use an in-memory implementation of browser storage. Separate persistence and browser suites cover storage failures and recovery; see the acceptance evidence for browser, accessibility and performance limits.
 
 ## Browser acceptance checklist
 
@@ -54,10 +54,12 @@ Use a separate browser profile or test origin. Do not clear a real wardrobe to r
 - [x] Schedule an outfit, update the same day's assignment, and remove it.
 - [x] Delete items and confirm no orphaned plans or empty outfits remain.
 - [x] Verify item-dialog initial focus, Tab containment, Escape, and focus restoration in Chromium. The shared modal now uses a native dialog with explicit Tab wrapping.
-- [ ] Exercise category deletion and changing outfit composition in the browser (store deletion tests already pass).
-- [ ] Complete keyboard-only form submission and check the outfit dialog in other browsers.
-- [ ] Verify empty/invalid date handling and date display in positive and negative UTC offsets. Date validation and date-only parsing need follow-up work.
-- [ ] Populate 500 items in an isolated test profile and measure listing, filtering, and saving. Record device/browser and timings; the original performance targets are not yet verified.
+- [x] Exercise category deletion and changing outfit composition in Chromium.
+- [x] Complete keyboard-only item/outfit form submission and automated error-association checks in Chromium.
+- [ ] Verify actual screen-reader output and dialog behavior in other browsers.
+- [x] Verify empty/invalid date handling and date display in UTC, America/Los_Angeles and Asia/Tokyo.
+- [x] Collect isolated W500 fixture load/search/save observations and browser event-to-write samples; see the acceptance evidence.
+- [ ] Approve load/search budgets and verify full interaction/render latency across the supported devices and browsers.
 - [ ] On the deployed build, confirm retired `/api/bootstrap` and mutation routes no longer exist. Removing them locally does not secure an older deployment.
 
 ## Phase 1 implementation progress
@@ -78,11 +80,15 @@ See [the acceptance evidence](PHASE_1_ACCEPTANCE.md) for P1-01 through P1-12 cov
 
 ## Follow-up priorities
 
-1. Extend the passing Chromium suite with the remaining browser checks before expanding features.
-2. Fix date-only parsing, invalid date submission, duplicate category naming, and error feedback with reproducing tests; complete the remaining dialog accessibility checks.
-3. Design explicit backup/restore before claiming local storage is a durable backup.
-4. Review dependency audit findings and update compatible packages in a dedicated change, with the same checks. The initial install reported vulnerabilities; a passing build is not a security audit.
+1. Complete actual screen-reader and cross-browser verification without repeating completed Chromium semantics checks as new implementation work.
+2. Agree on load/search budgets and supported devices, then collect the missing performance evidence. Existing event-to-write measurements do not prove full render latency.
+3. Preserve dependency audit Task #15 as paused and unresolved. Updates in `72a7d57` are complete; the last recorded blocker is five high development-tool findings on the braces chain. Check fresh advisory evidence before deciding whether further implementation is needed; do not force a lint-tool downgrade or waive findings silently.
+4. Obtain user approval before pushing or deploying, then record GitHub and deployment evidence. The earlier authentication blocker has not been rechecked.
 5. Consider authenticated cloud sync only as a separate project: verified user sessions, versioned database migrations, ownership constraints, transactional writes, and cross-user denial tests must come before deployment. Never trust a user ID supplied by the browser as authentication.
+
+### Task-history reconciliation at `da65d11`
+
+Saved task history in `.pi/tasks/` records Task #15 as in progress and paused after the dependency update; Task #16 (save timing and accessible errors, `cc674d3`) and Task #17 (integrated verification and evidence, `da65d11`) are completed. The unfinished status of Task #15 does not mean its completed dependency updates should be repeated. The audit results are historical, not a fresh registry check. No advisory waiver or full Phase 1/release approval is recorded. Keep the saved history local rather than creating a duplicate implementation plan.
 
 ## Planned expansion: personalized avatars and 3D clothing
 
