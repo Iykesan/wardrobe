@@ -1,88 +1,109 @@
 import * as THREE from "three";
 
-const WHITE = 0xf7f7f2;
+type Ring = { y: number; width: number; depth: number };
 
-function garmentMaterial() {
-  return new THREE.MeshStandardMaterial({
-    color: WHITE,
-    roughness: 0.94,
-    metalness: 0,
-    side: THREE.DoubleSide,
-  });
-}
-
-function sleeveBetween(side: number, material: THREE.Material) {
-  const start = new THREE.Vector3(side * 0.66, 5.56, 0);
-  const end = new THREE.Vector3(side * 1.04, 5.22, 0);
-  const axis = end.clone().sub(start);
-  const sleeve = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.25, 0.20, axis.length() + 0.12, 24, 3, false),
-    material,
-  );
-  sleeve.name = side < 0 ? "tshirt.leftSleeve" : "tshirt.rightSleeve";
-  sleeve.position.copy(start).add(end).multiplyScalar(0.5);
-  sleeve.position.x -= side * 0.04;
-  sleeve.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis.normalize());
-  sleeve.castShadow = true;
-  sleeve.receiveShadow = true;
-  return sleeve;
-}
-
-function torsoMesh(material: THREE.Material) {
-  const ringCount = 40;
-  const profile = [
-    [3.42, 0.56, 0.40], [3.58, 0.74, 0.48], [3.9, 0.79, 0.50],
-    [4.25, 0.78, 0.49], [4.58, 0.74, 0.46], [4.9, 0.77, 0.48],
-    [5.2, 0.84, 0.50], [5.48, 0.93, 0.48], [5.68, 0.88, 0.42],
-    [5.82, 0.72, 0.34], [5.9, 0.48, 0.28],
-  ] as const;
-  const positions: number[] = [];
-  const indices: number[] = [];
-  profile.forEach(([y, width, depth]) => {
-    for (let column = 0; column < ringCount; column++) {
-      const angle = column / ringCount * Math.PI * 2;
-      positions.push(Math.cos(angle) * width, y, Math.sin(angle) * depth);
+function appendRingSurface(
+  positions: number[],
+  indices: number[],
+  rings: Ring[],
+  columns: number,
+  transform: (ring: Ring, angle: number, row: number) => [number, number, number],
+) {
+  const start = positions.length / 3;
+  rings.forEach((ring, row) => {
+    for (let column = 0; column < columns; column++) {
+      const angle = column / columns * Math.PI * 2;
+      positions.push(...transform(ring, angle, row));
     }
   });
-  for (let row = 0; row < profile.length - 1; row++) {
-    for (let column = 0; column < ringCount; column++) {
-      const next = (column + 1) % ringCount;
-      const a = row * ringCount + column;
-      const b = row * ringCount + next;
-      const c = (row + 1) * ringCount + column;
-      const d = (row + 1) * ringCount + next;
+  for (let row = 0; row < rings.length - 1; row++) {
+    for (let column = 0; column < columns; column++) {
+      const next = (column + 1) % columns;
+      const a = start + row * columns + column;
+      const b = start + row * columns + next;
+      const c = start + (row + 1) * columns + column;
+      const d = start + (row + 1) * columns + next;
       indices.push(a, c, b, b, c, d);
     }
   }
+}
+
+function createGarmentGeometry() {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const torso: Ring[] = [
+    { y: 3.42, width: 0.58, depth: 0.42 },
+    { y: 3.58, width: 0.75, depth: 0.5 },
+    { y: 3.9, width: 0.8, depth: 0.52 },
+    { y: 4.25, width: 0.79, depth: 0.51 },
+    { y: 4.58, width: 0.76, depth: 0.48 },
+    { y: 4.9, width: 0.79, depth: 0.5 },
+    { y: 5.2, width: 0.86, depth: 0.52 },
+    { y: 5.48, width: 0.95, depth: 0.5 },
+    { y: 5.7, width: 0.9, depth: 0.43 },
+    { y: 5.84, width: 0.7, depth: 0.35 },
+  ];
+  appendRingSurface(positions, indices, torso, 40, (ring, angle, row) => {
+    const shoulderLift = row === torso.length - 1 ? Math.sin(angle) * 0.035 : 0;
+    return [Math.cos(angle) * ring.width, ring.y + shoulderLift, Math.sin(angle) * ring.depth];
+  });
+
+  const sleeve: Ring[] = [
+    { y: 0, width: 0.36, depth: 0.34 },
+    { y: 0.16, width: 0.34, depth: 0.33 },
+    { y: 0.38, width: 0.27, depth: 0.28 },
+    { y: 0.58, width: 0.21, depth: 0.24 },
+  ];
+  for (const side of [-1, 1]) {
+    appendRingSurface(positions, indices, sleeve, 20, (ring, angle) => {
+      const axisT = ring.y / 0.56;
+      const centerX = side * (0.58 + axisT * 0.4);
+      const centerY = 5.58 - axisT * 0.3;
+      const along = new THREE.Vector3(side * 0.34, -0.3, 0).normalize();
+      const widthAxis = new THREE.Vector3(-along.y * side, along.x * side, 0);
+      const around = widthAxis.multiplyScalar(Math.cos(angle) * ring.width);
+      const depth = new THREE.Vector3(0, 0, Math.sin(angle) * ring.depth);
+      return [centerX + around.x + depth.x, centerY + around.y + depth.y, around.z + depth.z];
+    });
+  }
+
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = "tshirt.torso";
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
+  return geometry;
 }
 
-function createCollar(material: THREE.Material) {
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.065, 10, 32), material);
-  collar.name = "tshirt.crewNeck";
-  collar.position.set(0, 5.86, 0);
-  collar.rotation.x = Math.PI / 2;
-  collar.scale.z = 0.76;
-  collar.castShadow = true;
-  return collar;
+function garmentMaterial() {
+  return new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.86,
+    metalness: 0,
+    side: THREE.DoubleSide,
+  });
 }
 
 export function createTShirt() {
   const garment = new THREE.Group();
   garment.name = "tshirt";
   const material = garmentMaterial();
-  garment.add(torsoMesh(material), createCollar(material), sleeveBetween(-1, material), sleeveBetween(1, material));
+  const mesh = new THREE.Mesh(createGarmentGeometry(), material);
+  mesh.name = "tshirt.connectedGarmentMesh";
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  garment.add(mesh);
+
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.055, 10, 32), material);
+  collar.name = "tshirt.crewNeck";
+  collar.position.set(0, 5.82, 0);
+  collar.rotation.x = Math.PI / 2;
+  collar.scale.z = 0.76;
+  collar.castShadow = true;
+  garment.add(collar);
+
   garment.userData.garmentType = "tshirt";
   garment.userData.material = "white-cotton";
-  garment.userData.source = "custom-garment-mesh";
+  garment.userData.source = "custom-connected-garment-mesh";
   return garment;
 }
 
