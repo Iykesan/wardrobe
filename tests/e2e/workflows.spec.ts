@@ -127,6 +127,20 @@ test("item dialog supports keyboard focus, containment and Escape", async ({ pag
   await expect(opener).toBeFocused();
 });
 
+test("preview studio shows approximate clothing silhouettes and color/view controls", async ({ page }) => {
+  await setup(page);
+  const before = await savedState(page);
+  await page.getByRole("link", { name: "Preview", exact: true }).click();
+  await expect(page).toHaveURL(/\/preview$/);
+  await expect(page.getByRole("heading", { name: "Preview a simple outfit silhouette" })).toBeVisible();
+  await expect(page.getByRole("img", { name: /approximate mannequin showing front view/i })).toBeVisible();
+  await page.getByRole("button", { name: "side", exact: true }).click();
+  await expect(page.getByText("Side view", { exact: true })).toBeVisible();
+  await page.getByLabel("Shirt color").fill("#ff0000");
+  await page.getByRole("button", { name: "back", exact: true }).click();
+  await expect(page.getByRole("img", { name: /approximate mannequin showing back view/i })).toBeVisible();
+  expect(await savedState(page)).toEqual(before);
+});
 test("retired remote APIs return not found", async ({ request }) => {
   expect((await request.get("/api/bootstrap")).status()).toBe(404);
   for (const resource of ["categories", "subcategories", "items", "outfits", "plans"]) {

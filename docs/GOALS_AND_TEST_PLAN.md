@@ -96,7 +96,7 @@ Saved task history in `.pi/tasks/` records Task #15 as in progress and paused af
 
 See [the avatar and 3D wardrobe feature plan](AVATAR_AND_3D_WARDROBE_PLAN.md). The goal is a customizable avatar for each user, including skin tone, hair, height, and body proportions, with 3D representations of their clothing that can be combined into outfit previews.
 
-The first Phase 3 increment adds a `/preview` entry point that intentionally loads no rendering engine or 3D assets. It documents the feasibility boundaries and links back to the existing wardrobe and outfit flows. This is a product-safety shell, not evidence that 3D rendering is implemented or that any fit claim is supported.
+The Phase 3 prototype now includes a desktop-only procedural silhouette studio at `/preview` for a shirt, trousers and shoes. It supports front/side/back views and local color changes without writing to wardrobe storage. This remains an approximate color/silhouette preview: no fit, sizing, garment construction, animation, mobile support, or external model assets are claimed.
 
 ## Working with agents and Git
 

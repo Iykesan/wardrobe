@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-The Phase 3 work currently contains only a safe `/preview` entry point. It does not establish avatar rendering, asset compatibility, performance budgets, accessibility of a 3D viewer, or support for any future avatar, account or fit case.
+Phase 3 now has a procedural desktop silhouette studio for shirt, trousers and shoes. It supports front/side/back views and local color controls without changing wardrobe storage. It does not establish 3D model rendering, asset compatibility, mobile behavior, performance budgets, or fit claims.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 
