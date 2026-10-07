@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-Phase 3 now renders a procedural Three.js scene for shirt, trousers and shoes, with front/side/back views, local color controls, and a WebGL fallback. The focused Chromium run measured 162.5 ms to visible render and 419.4 ms for side-view interaction in the local Playwright environment. These are single-run browser-side upper bounds, not frame-rate, memory, cross-device, or visual-quality evidence. The 30 FPS target remains unmeasured.
+Phase 3 now renders a rebuilt neutral low-poly fashion mannequin with modular named body regions, front/side/back views, and a WebGL fallback. Chromium screenshot review covered all three views. The current silhouette is visually coherent and human-proportioned, but visual review remains a product-quality check rather than proof of real-world fit. The latest browser run measured 1,097 ms to render and 142 ms for a view change, including browser automation overhead; this is not an FPS or memory measurement.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 

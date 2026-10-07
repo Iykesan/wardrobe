@@ -2,198 +2,105 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { createMannequin, disposeMannequin } from "../mannequin";
 
 type View = "front" | "side" | "back";
-
-const viewAngles: Record<View, number> = { front: 0, side: Math.PI / 2, back: Math.PI };
-
-function capsule(radius: number, length: number, color: string, garment?: string) {
-  const mesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(radius, length, 8, 16),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
-  );
-  mesh.userData.garment = garment;
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
-function skinSphere(radius: number, color: string) {
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 20, 14),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
-  );
-  mesh.userData.garment = "skin";
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
-function taperedBody(color: string, profile: Array<[number, number]>, garment: string) {
-  const geometry = new THREE.LatheGeometry(
-    profile.map(([radius, height]) => new THREE.Vector2(radius, height)),
-    24,
-  );
-  const mesh = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
-  );
-  mesh.userData.garment = garment;
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
-function createOutfit(shirtColor: string, trouserColor: string, shoeColor: string) {
-  const outfit = new THREE.Group();
-  const skin = "#c99578";
-
-  const head = skinSphere(0.4, skin);
-  head.position.y = 4.12;
-  head.scale.set(0.86, 1.12, 0.86);
-  outfit.add(head);
-
-  const neck = capsule(0.18, 0.16, skin, "skin");
-  neck.position.y = 3.57;
-  outfit.add(neck);
-
-  // The clothing overlaps a simple body form so the figure reads as one mannequin.
-  const shirt = taperedBody(
-    shirtColor,
-    [[0.48, -0.7], [0.58, -0.58], [0.62, -0.38], [0.64, 0.05], [0.78, 0.45], [0.72, 0.68], [0.5, 0.78]],
-    "shirt",
-  );
-  shirt.position.y = 2.72;
-  shirt.scale.z = 0.72;
-  outfit.add(shirt);
-
-  const pelvis = taperedBody(
-    trouserColor,
-    [[0.42, -0.32], [0.58, -0.18], [0.62, 0.08], [0.58, 0.28], [0.42, 0.36]],
-    "trousers",
-  );
-  pelvis.position.y = 1.55;
-  pelvis.scale.z = 0.78;
-  outfit.add(pelvis);
-
-  for (const side of [-1, 1]) {
-    const upperArm = capsule(0.18, 0.68, shirtColor, "shirt");
-    upperArm.position.set(side * 0.86, 2.72, 0);
-    upperArm.rotation.z = side * -0.12;
-    outfit.add(upperArm);
-
-    const forearm = capsule(0.15, 0.58, skin, "skin");
-    forearm.position.set(side * 0.91, 1.9, 0);
-    forearm.rotation.z = side * -0.05;
-    outfit.add(forearm);
-
-    const hand = skinSphere(0.17, skin);
-    hand.position.set(side * 0.91, 1.43, 0);
-    hand.scale.set(0.8, 1.15, 0.7);
-    outfit.add(hand);
-
-    const leg = capsule(0.24, 1.18, trouserColor, "trousers");
-    leg.position.set(side * 0.3, 0.58, 0);
-    outfit.add(leg);
-
-    const shoe = skinSphere(0.5, shoeColor);
-    shoe.userData.garment = "shoes";
-    shoe.position.set(side * 0.3, -0.2, 0.22);
-    shoe.scale.set(0.62, 0.34, 1.05);
-  }
-
-  return outfit;
-}
+const angles = { front: 0, side: Math.PI / 2, back: Math.PI };
 
 export default function PreviewStudio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ outfit: THREE.Group; camera: THREE.PerspectiveCamera; renderer: THREE.WebGLRenderer; scene: THREE.Scene } | null>(null);
+  const sceneRef = useRef<{ model: THREE.Group; render: () => void } | null>(null);
   const [view, setView] = useState<View>("front");
-  const [shirtColor, setShirtColor] = useState("#4f6d7a");
-  const [trouserColor, setTrouserColor] = useState("#334155");
-  const [shoeColor, setShoeColor] = useState("#20242b");
-  const colorsRef = useRef({ shirtColor, trouserColor, shoeColor });
-  useEffect(() => {
-    colorsRef.current = { shirtColor, trouserColor, shoeColor };
-  }, [shirtColor, trouserColor, shoeColor]);
-  const [graphicsAvailable, setGraphicsAvailable] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = canvasRef.current!;
+    let renderer: THREE.WebGLRenderer;
     try {
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-      renderer.shadowMap.enabled = true;
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color("#e7edef");
-      const camera = new THREE.PerspectiveCamera(32, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-      camera.position.set(0, 2.05, 10.5);
-      camera.lookAt(0, 2.05, 0);
-      scene.add(new THREE.HemisphereLight("#ffffff", "#9aa7ad", 2.2));
-      const key = new THREE.DirectionalLight("#ffffff", 2.4);
-      key.position.set(4, 7, 6);
-      key.castShadow = true;
-      scene.add(key);
-      const floor = new THREE.Mesh(new THREE.CircleGeometry(4.5, 48), new THREE.MeshStandardMaterial({ color: "#f7f4ed", roughness: 1 }));
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -0.35;
-      floor.receiveShadow = true;
-      scene.add(floor);
-      const outfit = createOutfit(colorsRef.current.shirtColor, colorsRef.current.trouserColor, colorsRef.current.shoeColor);
-      scene.add(outfit);
-      sceneRef.current = { outfit, camera, renderer, scene };
-      const render = () => renderer.render(scene, camera);
-      render();
-      const resize = () => {
-        if (!canvas.clientWidth || !canvas.clientHeight) return;
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-        render();
-      };
-      window.addEventListener("resize", resize);
-      return () => { window.removeEventListener("resize", resize); renderer.dispose(); scene.traverse((object) => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose()); else object.material.dispose(); } }); sceneRef.current = null; };
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     } catch {
-      window.setTimeout(() => setGraphicsAvailable(false), 0);
+      const timer = window.setTimeout(() => setFailed(true), 0);
+      return () => window.clearTimeout(timer);
     }
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#e1e5e7");
+    const camera = new THREE.OrthographicCamera(-3, 3, 4.4, -4.4, .1, 50);
+    camera.position.set(0, 4.25, 16);
+    camera.lookAt(0, 3.75, 0);
+    scene.add(new THREE.HemisphereLight("#ffffff", "#a2aab4", 2));
+    const key = new THREE.DirectionalLight("#fff7ed", 3);
+    key.position.set(4, 10, 7);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    Object.assign(key.shadow.camera, { left: -5, right: 5, top: 9, bottom: -5, far: 30 });
+    key.shadow.normalBias = .03;
+    key.shadow.radius = 4;
+    scene.add(key);
+    const fill = new THREE.DirectionalLight("#dde9ff", 1.1);
+    fill.position.set(-5, 5, -3);
+    scene.add(fill);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.ShadowMaterial({ opacity: .16 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    const model = createMannequin();
+    scene.add(model);
+    const render = () => {
+      renderer.render(scene, camera);
+      canvas.dataset.rendered = "true";
+    };
+    sceneRef.current = { model, render };
+    const resize = () => {
+      const aspect = canvas.clientWidth / canvas.clientHeight;
+      const halfHeight = Math.max(4.4, 2.2 / aspect);
+      camera.left = -halfHeight * aspect;
+      camera.right = halfHeight * aspect;
+      camera.top = halfHeight;
+      camera.bottom = -halfHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+      render();
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+    resize();
+    return () => {
+      observer.disconnect();
+      sceneRef.current = null;
+      disposeMannequin(model);
+      floor.geometry.dispose();
+      floor.material.dispose();
+      key.shadow.map?.dispose();
+      renderer.dispose();
+    };
   }, []);
 
   useEffect(() => {
     const current = sceneRef.current;
-    if (!current) return;
-    current.outfit.traverse((object) => {
-      if (!(object instanceof THREE.Mesh) || !(object.material instanceof THREE.MeshStandardMaterial)) return;
-      if (object.userData.garment === "shirt") object.material.color.set(shirtColor);
-      else if (object.userData.garment === "trousers") object.material.color.set(trouserColor);
-      else if (object.userData.garment === "shoes") object.material.color.set(shoeColor);
-    });
-    current.renderer.render(current.scene, current.camera);
-  }, [shirtColor, trouserColor, shoeColor]);
-
-  useEffect(() => {
-    const current = sceneRef.current;
     if (current) {
-      current.outfit.rotation.y = viewAngles[view];
-      current.renderer.render(current.scene, current.camera);
+      current.model.rotation.y = angles[view];
+      current.render();
+      canvasRef.current!.dataset.view = view;
     }
   }, [view]);
 
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="studio-heading">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><h2 id="studio-heading" className="text-2xl font-semibold text-ink">3D silhouette studio</h2><p className="mt-1 text-sm text-muted">Procedural shirt, trousers, and shoe geometry. Preview only; no fit claim.</p></div>
-        <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">Approximate 3D preview</span>
+    <section aria-labelledby="studio-heading" className="space-y-5">
+      <h2 id="studio-heading" className="text-2xl font-semibold">Fashion mannequin</h2>
+      <p className="text-sm text-muted">Neutral matte body, relaxed A-pose, and adult proportions. Clothing attachment regions are prepared; garments are not displayed yet.</p>
+      <div role="group" aria-label="Preview angle" className="flex gap-2">
+        {(["front", "side", "back"] as View[]).map((option) => (
+          <button type="button" key={option} aria-pressed={view === option} onClick={() => setView(option)} className={`rounded-lg px-4 py-2 capitalize ${view === option ? "bg-accent text-white" : "bg-white text-ink"}`}>{option}</button>
+        ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="rounded-[var(--radius-card)] border border-border bg-[#eef1f2] p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-medium text-ink" aria-live="polite">{view[0].toUpperCase() + view.slice(1)} view</p><div className="flex gap-2" role="group" aria-label="Preview angle">{(["front", "side", "back"] as View[]).map((option) => <button key={option} type="button" aria-pressed={view === option} onClick={() => setView(option)} className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${view === option ? "bg-accent text-white" : "bg-white text-ink hover:bg-surface"}`}>{option}</button>)}</div></div>
-          <div className="mt-6 overflow-hidden rounded-2xl bg-gradient-to-b from-[#dfe8ea] to-[#f7f4ed]"><canvas ref={canvasRef} className="h-[30rem] w-full" aria-label="Approximate 3D mannequin wearing a shirt, trousers, and shoes" role="img" />{!graphicsAvailable && <div className="p-8 text-center text-sm text-muted">3D graphics are unavailable in this browser. Your wardrobe and planner remain usable.</div>}</div>
-          <p className="mt-3 text-xs text-muted">Procedural geometry demonstrates color and silhouette only. It does not represent garment measurements, construction, or real-world fit.</p>
-        </div>
-        <aside className="flex flex-col gap-5 rounded-[var(--radius-card)] border border-border bg-surface/80 p-5" aria-label="Preview controls"><div><h3 className="font-semibold text-ink">Colors</h3><p className="mt-1 text-xs leading-5 text-muted">Changes affect only this preview.</p></div>{[["Shirt", shirtColor, setShirtColor], ["Trousers", trouserColor, setTrouserColor], ["Shoes", shoeColor, setShoeColor]].map(([label, value, setter]) => <label key={label as string} className="flex items-center justify-between gap-3 text-sm text-ink">{label as string}<input type="color" aria-label={`${label as string} color`} value={value as string} onChange={(event) => (setter as (color: string) => void)(event.target.value)} className="h-9 w-12 cursor-pointer rounded border border-border bg-white p-1" /></label>)}<div className="border-t border-border pt-4 text-xs leading-5 text-muted"><strong className="text-ink">Supported now:</strong> one static desktop procedural model with front, side, and back views. Animation, body customization, model files, and mobile budgets are not included.</div></aside>
-      </div>
+      <p aria-live="polite" className="text-sm">{view[0].toUpperCase() + view.slice(1)} view</p>
+      <canvas ref={canvasRef} role="img" aria-label="Neutral fashion mannequin in a relaxed A-pose" className="h-[620px] w-full rounded-2xl" />
+      {failed && <p role="alert">3D graphics are unavailable. Your wardrobe and planner remain usable.</p>}
+      <p className="text-xs text-muted">Approximate body form, not a prediction of real-world clothing fit. No wardrobe data is changed.</p>
     </section>
   );
 }

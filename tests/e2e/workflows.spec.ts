@@ -127,32 +127,31 @@ test("item dialog supports keyboard focus, containment and Escape", async ({ pag
   await expect(opener).toBeFocused();
 });
 
-test("preview studio shows approximate clothing silhouettes and color/view controls", async ({ page }) => {
+test("preview mannequin renders front, side and back without changing wardrobe", async ({ page }, testInfo) => {
   await setup(page);
   const before = await savedState(page);
   await page.getByRole("link", { name: "Preview", exact: true }).click();
-  await expect(page).toHaveURL(/\/preview$/);
-  await expect(page.getByRole("heading", { name: "Preview a simple outfit silhouette" })).toBeVisible();
-  await expect(page.getByRole("img", { name: /approximate 3d mannequin wearing a shirt, trousers, and shoes/i })).toBeVisible();
-  await page.getByRole("button", { name: "side", exact: true }).click();
-  await expect(page.getByText("Side view", { exact: true })).toBeVisible();
-  await page.getByLabel("Shirt color").fill("#ff0000");
-  await page.getByRole("button", { name: "back", exact: true }).click();
-  await expect(page.getByRole("img", { name: /approximate 3d mannequin wearing a shirt, trousers, and shoes/i })).toBeVisible();
+  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin in a relaxed A-pose" });
+  await expect(canvas).toHaveAttribute("data-rendered", "true");
+  for (const view of ["front", "side", "back"]) {
+    await page.getByRole("button", { name: view, exact: true }).click();
+    await expect(canvas).toHaveAttribute("data-view", view);
+    await canvas.screenshot({ path: testInfo.outputPath(`${view}.png`) });
+  }
   expect(await savedState(page)).toEqual(before);
 });
-test("preview studio records initial render and view interaction timing", async ({ page }) => {
-  await setup(page);
-  await page.getByRole("link", { name: "Preview", exact: true }).click();
-  const initialRenderMs = await page.evaluate(() => performance.now());
-  await expect(page.getByRole("img", { name: /approximate 3d mannequin wearing a shirt, trousers, and shoes/i })).toBeVisible();
-  const visibleRenderMs = await page.evaluate((startedAt) => performance.now() - startedAt, initialRenderMs);
-  const interactionStart = await page.evaluate(() => performance.now());
+test("preview mannequin records navigation-to-render and view response", async ({ page }) => {
+  const start = Date.now();
+  await page.goto("/preview");
+  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin in a relaxed A-pose" });
+  await expect(canvas).toHaveAttribute("data-rendered", "true");
+  const renderMs = Date.now() - start;
+  const interactionStart = Date.now();
   await page.getByRole("button", { name: "side", exact: true }).click();
-  await expect(page.getByRole("img", { name: /approximate 3d mannequin wearing a shirt, trousers, and shoes/i })).toBeVisible();
-  const interactionMs = await page.evaluate((startedAt) => performance.now() - startedAt, interactionStart);
-  console.log(`[P3-02] preview timing: ${JSON.stringify({ visibleRenderMs, interactionMs, note: "Browser-side upper bounds after navigation; not a frame-rate or memory measurement." })}`);
-  expect(visibleRenderMs).toBeLessThan(3000);
+  await expect(canvas).toHaveAttribute("data-view", "side");
+  const interactionMs = Date.now() - interactionStart;
+  console.log({ renderMs, interactionMs, note: "Includes browser automation overhead; not FPS." });
+  expect(renderMs).toBeLessThan(3000);
   expect(interactionMs).toBeLessThan(1000);
 });
 test("retired remote APIs return not found", async ({ request }) => {

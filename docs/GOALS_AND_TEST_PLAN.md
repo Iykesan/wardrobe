@@ -96,7 +96,7 @@ Saved task history in `.pi/tasks/` records Task #15 as in progress and paused af
 
 See [the avatar and 3D wardrobe feature plan](AVATAR_AND_3D_WARDROBE_PLAN.md). The goal is a customizable avatar for each user, including skin tone, hair, height, and body proportions, with 3D representations of their clothing that can be combined into outfit previews.
 
-The Phase 3 prototype now renders a real procedural 3D scene in the browser using Three.js. It includes a simple mannequin with shirt, trousers, and shoes, front/side/back rotation, color controls, and a WebGL-unavailable fallback. It remains an approximate color/silhouette preview: no fit, sizing, garment construction, animation, mobile support, saved avatar configuration, or external model assets are claimed.
+The Phase 3 prototype now renders a rebuilt neutral fashion mannequin from modular low-poly section geometry. It uses a 7.5-head body, visible neck, tapered torso and pelvis, relaxed A-pose arms, long thighs with knee transitions, tapered lower legs, and shaped feet. Regions are named for later clothing attachment (`head`, `torso`, `pelvis`, `upperArm`, `forearm`, `hand`, `thigh`, `lowerLeg`, `foot`). It uses a matte light-gray material and no skin, hair, facial features, or fit claim.
 
 ## Working with agents and Git
 
