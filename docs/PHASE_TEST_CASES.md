@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-Phase 3 now renders a rebuilt neutral low-poly fashion mannequin with modular named body regions, front/side/back views, and a WebGL fallback. Chromium screenshot review covered all three views. The current silhouette is visually coherent and human-proportioned, but visual review remains a product-quality check rather than proof of real-world fit. The latest browser run measured 1,097 ms to render and 142 ms for a view change, including browser automation overhead; this is not an FPS or memory measurement.
+Phase 3 now includes a separate static white T-shirt garment with a smooth torso shell, collar opening, short sleeves, matte cotton-like material, rotation with the mannequin, and show/hide control. Front, side, and back Chromium screenshots were reviewed. No cloth physics, uploads, external model assets, or real-world fit claim are included.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 

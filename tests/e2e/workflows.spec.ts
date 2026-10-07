@@ -127,23 +127,27 @@ test("item dialog supports keyboard focus, containment and Escape", async ({ pag
   await expect(opener).toBeFocused();
 });
 
-test("preview mannequin renders front, side and back without changing wardrobe", async ({ page }, testInfo) => {
+test("preview mannequin renders front, side and back with a static T-shirt", async ({ page }, testInfo) => {
   await setup(page);
   const before = await savedState(page);
   await page.getByRole("link", { name: "Preview", exact: true }).click();
-  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin in a relaxed A-pose" });
+  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin wearing a white T-shirt" });
   await expect(canvas).toHaveAttribute("data-rendered", "true");
+  await expect(page.getByRole("button", { name: "Hide T-shirt", exact: true })).toBeVisible();
   for (const view of ["front", "side", "back"]) {
     await page.getByRole("button", { name: view, exact: true }).click();
     await expect(canvas).toHaveAttribute("data-view", view);
     await canvas.screenshot({ path: testInfo.outputPath(`${view}.png`) });
   }
+  await page.getByRole("button", { name: "Hide T-shirt", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Show T-shirt", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Show T-shirt", exact: true }).click();
   expect(await savedState(page)).toEqual(before);
 });
 test("preview mannequin records navigation-to-render and view response", async ({ page }) => {
   const start = Date.now();
   await page.goto("/preview");
-  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin in a relaxed A-pose" });
+  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin wearing a white T-shirt" });
   await expect(canvas).toHaveAttribute("data-rendered", "true");
   const renderMs = Date.now() - start;
   const interactionStart = Date.now();
