@@ -141,6 +141,20 @@ test("preview studio shows approximate clothing silhouettes and color/view contr
   await expect(page.getByRole("img", { name: /approximate mannequin showing back view/i })).toBeVisible();
   expect(await savedState(page)).toEqual(before);
 });
+test("preview studio records initial render and view interaction timing", async ({ page }) => {
+  await setup(page);
+  await page.getByRole("link", { name: "Preview", exact: true }).click();
+  const initialRenderMs = await page.evaluate(() => performance.now());
+  await expect(page.getByRole("img", { name: /approximate mannequin showing front view/i })).toBeVisible();
+  const visibleRenderMs = await page.evaluate((startedAt) => performance.now() - startedAt, initialRenderMs);
+  const interactionStart = await page.evaluate(() => performance.now());
+  await page.getByRole("button", { name: "side", exact: true }).click();
+  await expect(page.getByRole("img", { name: /approximate mannequin showing side view/i })).toBeVisible();
+  const interactionMs = await page.evaluate((startedAt) => performance.now() - startedAt, interactionStart);
+  console.log(`[P3-02] preview timing: ${JSON.stringify({ visibleRenderMs, interactionMs, note: "Browser-side upper bounds after navigation; not a frame-rate or memory measurement." })}`);
+  expect(visibleRenderMs).toBeLessThan(3000);
+  expect(interactionMs).toBeLessThan(1000);
+});
 test("retired remote APIs return not found", async ({ request }) => {
   expect((await request.get("/api/bootstrap")).status()).toBe(404);
   for (const resource of ["categories", "subcategories", "items", "outfits", "plans"]) {

@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-Phase 3 now has a procedural desktop silhouette studio for shirt, trousers and shoes. It supports front/side/back views and local color controls without changing wardrobe storage. It does not establish 3D model rendering, asset compatibility, mobile behavior, performance budgets, or fit claims.
+The procedural studio has a focused Chromium timing check. In the local run at commit `bbc2cbf` plus the timing test, browser-side visible render was **51.1 ms** and side-view interaction was **78.9 ms** on the repository's Playwright Chromium environment. These are single-run upper bounds after navigation, not frame-rate, memory, cross-device, or visual-quality evidence. The provisional target is under 3 seconds for initial visible render and under 1 second for view interaction; a 30 FPS target remains unmeasured.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 
