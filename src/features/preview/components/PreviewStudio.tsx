@@ -7,17 +7,6 @@ type View = "front" | "side" | "back";
 
 const viewAngles: Record<View, number> = { front: 0, side: Math.PI / 2, back: Math.PI };
 
-function roundedBox(width: number, height: number, depth: number, color: string, garment?: string) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
-  );
-  mesh.userData.garment = garment;
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
 function capsule(radius: number, length: number, color: string, garment?: string) {
   const mesh = new THREE.Mesh(
     new THREE.CapsuleGeometry(radius, length, 8, 16),
@@ -40,11 +29,26 @@ function skinSphere(radius: number, color: string) {
   return mesh;
 }
 
+function taperedBody(color: string, profile: Array<[number, number]>, garment: string) {
+  const geometry = new THREE.LatheGeometry(
+    profile.map(([radius, height]) => new THREE.Vector2(radius, height)),
+    24,
+  );
+  const mesh = new THREE.Mesh(
+    geometry,
+    new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
+  );
+  mesh.userData.garment = garment;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
 function createOutfit(shirtColor: string, trouserColor: string, shoeColor: string) {
   const outfit = new THREE.Group();
   const skin = "#c99578";
 
-  const head = skinSphere(0.46, skin);
+  const head = skinSphere(0.4, skin);
   head.position.y = 4.12;
   head.scale.set(0.86, 1.12, 0.86);
   outfit.add(head);
@@ -54,40 +58,48 @@ function createOutfit(shirtColor: string, trouserColor: string, shoeColor: strin
   outfit.add(neck);
 
   // The clothing overlaps a simple body form so the figure reads as one mannequin.
-  const shirt = capsule(0.72, 0.72, shirtColor, "shirt");
-  shirt.position.y = 2.7;
-  shirt.scale.set(1.28, 1.05, 0.72);
+  const shirt = taperedBody(
+    shirtColor,
+    [[0.48, -0.7], [0.58, -0.58], [0.62, -0.38], [0.64, 0.05], [0.78, 0.45], [0.72, 0.68], [0.5, 0.78]],
+    "shirt",
+  );
+  shirt.position.y = 2.72;
+  shirt.scale.z = 0.72;
   outfit.add(shirt);
 
-  const pelvis = capsule(0.58, 0.28, trouserColor, "trousers");
-  pelvis.position.y = 1.65;
-  pelvis.scale.set(1.18, 0.72, 0.82);
+  const pelvis = taperedBody(
+    trouserColor,
+    [[0.42, -0.32], [0.58, -0.18], [0.62, 0.08], [0.58, 0.28], [0.42, 0.36]],
+    "trousers",
+  );
+  pelvis.position.y = 1.55;
+  pelvis.scale.z = 0.78;
   outfit.add(pelvis);
 
   for (const side of [-1, 1]) {
-    const upperArm = capsule(0.2, 0.72, shirtColor, "shirt");
-    upperArm.position.set(side * 0.98, 2.72, 0);
+    const upperArm = capsule(0.18, 0.68, shirtColor, "shirt");
+    upperArm.position.set(side * 0.86, 2.72, 0);
     upperArm.rotation.z = side * -0.12;
     outfit.add(upperArm);
 
-    const forearm = capsule(0.16, 0.62, skin, "skin");
-    forearm.position.set(side * 1.09, 1.88, 0);
+    const forearm = capsule(0.15, 0.58, skin, "skin");
+    forearm.position.set(side * 0.91, 1.9, 0);
     forearm.rotation.z = side * -0.05;
     outfit.add(forearm);
 
-    const hand = skinSphere(0.19, skin);
-    hand.position.set(side * 1.1, 1.38, 0);
+    const hand = skinSphere(0.17, skin);
+    hand.position.set(side * 0.91, 1.43, 0);
     hand.scale.set(0.8, 1.15, 0.7);
     outfit.add(hand);
 
-    const leg = capsule(0.27, 1.15, trouserColor, "trousers");
-    leg.position.set(side * 0.34, 0.7, 0);
+    const leg = capsule(0.24, 1.18, trouserColor, "trousers");
+    leg.position.set(side * 0.3, 0.58, 0);
     outfit.add(leg);
 
-    const shoe = roundedBox(0.58, 0.28, 1.02, shoeColor, "shoes");
-    shoe.position.set(side * 0.34, -0.16, 0.2);
-    shoe.geometry = new THREE.BoxGeometry(0.58, 0.28, 1.02, 3, 2, 4);
-    outfit.add(shoe);
+    const shoe = skinSphere(0.5, shoeColor);
+    shoe.userData.garment = "shoes";
+    shoe.position.set(side * 0.3, -0.2, 0.22);
+    shoe.scale.set(0.62, 0.34, 1.05);
   }
 
   return outfit;
@@ -117,8 +129,8 @@ export default function PreviewStudio() {
       const scene = new THREE.Scene();
       scene.background = new THREE.Color("#e7edef");
       const camera = new THREE.PerspectiveCamera(32, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-      camera.position.set(0, 2, 9);
-      camera.lookAt(0, 1.8, 0);
+      camera.position.set(0, 2.05, 10.5);
+      camera.lookAt(0, 2.05, 0);
       scene.add(new THREE.HemisphereLight("#ffffff", "#9aa7ad", 2.2));
       const key = new THREE.DirectionalLight("#ffffff", 2.4);
       key.position.set(4, 7, 6);
