@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { createMannequin, disposeMannequin } from "../mannequin";
 import { createTShirt, disposeTShirt } from "../garments/tshirt";
+import { TSHIRT_MANIFEST, isManifestCompatible } from "../garments/manifest";
 
 type View = "front" | "side" | "back";
 const angles = { front: 0, side: Math.PI / 2, back: Math.PI };
@@ -55,6 +56,9 @@ export default function PreviewStudio() {
 
     const model = createMannequin();
     const shirt = createTShirt();
+    if (!isManifestCompatible(TSHIRT_MANIFEST, "wardrope-fashion-mannequin-v1")) {
+      throw new Error("The T-shirt is not compatible with this mannequin.");
+    }
     scene.add(model, shirt);
     const render = () => {
       renderer.render(scene, camera);

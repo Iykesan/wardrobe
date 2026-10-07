@@ -37,6 +37,14 @@
 - Verification: `npm run check` passed (lint, TypeScript, 32 unit/store tests); focused T-shirt browser test passed. Full `npm run test:e2e` is still required before the milestone commit.
 - Current changes are uncommitted pending full-suite verification.
 
+## Priority 2 — garment manifest foundation
+
+- Added `src/features/preview/garments/manifest.ts` with typed garment family, fidelity, source/license, avatar compatibility, supported views, and loading-budget metadata.
+- Registered the original procedural T-shirt as `wardrope.tshirt`; no GLB/GLTF asset is claimed or loaded.
+- Preview validates the shirt manifest against `wardrope-fashion-mannequin-v1` before attaching it.
+- Added `tests/garments.test.ts`; total unit/store tests now pass: 33.
+- No garment object, mesh, or binary is written to wardrobe localStorage.
+
 ## Next task
 
-Build a reusable garment manifest/registry and viewer camera controls without adding asset binaries or storing rendering objects in localStorage.
+Improve the viewer with pointer orbit, bounded zoom, camera reset, and preserved front/side/back presets. Keep the viewer client-only and unloaded on ordinary wardrobe routes.
