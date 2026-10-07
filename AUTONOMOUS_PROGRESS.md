@@ -64,6 +64,6 @@
 
 ## Remaining autonomous work
 
-- Add a preview route workflow that reads an existing item representation and applies its saved color without duplicating inventory.
+- The preview currently uses the registered generic T-shirt template but does not yet load a selected wardrobe item by ID or apply its saved representation color; this remains the next integration increment.
 - Add explicit garment disposal/compatibility tests and update roadmap evidence.
 - Do not begin accounts, uploads, AI reconstruction, or cloth physics.
