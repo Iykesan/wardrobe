@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import * as THREE from "three";
 import { createMannequin, disposeMannequin } from "../mannequin";
 import { createTShirt, disposeTShirt } from "../garments/tshirt";
@@ -9,7 +9,8 @@ import { TSHIRT_MANIFEST, isManifestCompatible } from "../garments/manifest";
 type View = "front" | "side" | "back";
 const angles = { front: 0, side: Math.PI / 2, back: Math.PI };
 
-type SceneState = { model: THREE.Group; shirt: THREE.Group; render: () => void };
+type SceneState = { model: THREE.Group; shirt: THREE.Group; camera: THREE.OrthographicCamera; render: () => void };
+const CAMERA_DEFAULT = { azimuth: 0, elevation: 0.04, zoom: 1 };
 
 export default function PreviewStudio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +18,8 @@ export default function PreviewStudio() {
   const [view, setView] = useState<View>("front");
   const [shirtVisible, setShirtVisible] = useState(true);
   const [failed, setFailed] = useState(false);
+  const cameraState = useRef({ ...CAMERA_DEFAULT });
+  const dragState = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -64,7 +67,7 @@ export default function PreviewStudio() {
       renderer.render(scene, camera);
       canvas.dataset.rendered = "true";
     };
-    sceneRef.current = { model, shirt, render };
+    sceneRef.current = { model, shirt, camera, render };
     const resize = () => {
       const aspect = canvas.clientWidth / canvas.clientHeight;
       const halfHeight = Math.max(4.4, 2.2 / aspect);
@@ -101,6 +104,50 @@ export default function PreviewStudio() {
     if (canvasRef.current) canvasRef.current.dataset.view = view;
   }, [view, shirtVisible]);
 
+  const resetCamera = () => {
+    cameraState.current = { ...CAMERA_DEFAULT };
+    setView("front");
+    const current = sceneRef.current;
+    if (current) {
+      current.camera.zoom = 1;
+      current.camera.position.set(0, 4.25, 16);
+      current.camera.lookAt(0, 3.75, 0);
+      current.camera.updateProjectionMatrix();
+      current.render();
+    }
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+    dragState.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+    const previous = dragState.current;
+    const current = sceneRef.current;
+    if (!previous || !current) return;
+    cameraState.current.azimuth += (event.clientX - previous.x) * 0.012;
+    cameraState.current.elevation = THREE.MathUtils.clamp(cameraState.current.elevation + (event.clientY - previous.y) * 0.008, -0.65, 0.65);
+    previous.x = event.clientX;
+    previous.y = event.clientY;
+    current.model.rotation.y = cameraState.current.azimuth;
+    current.shirt.rotation.y = cameraState.current.azimuth;
+    current.camera.position.set(Math.sin(cameraState.current.azimuth) * 16, 4.25 + cameraState.current.elevation * 5, Math.cos(cameraState.current.azimuth) * 16);
+    current.camera.lookAt(0, 3.75, 0);
+    current.render();
+  };
+  const handlePointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
+    dragState.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+  const handleWheel = (event: WheelEvent<HTMLCanvasElement>) => {
+    const current = sceneRef.current;
+    if (!current) return;
+    cameraState.current.zoom = THREE.MathUtils.clamp(cameraState.current.zoom - event.deltaY * 0.001, 0.75, 1.5);
+    current.camera.zoom = cameraState.current.zoom;
+    current.camera.updateProjectionMatrix();
+    current.render();
+  };
+
   return (
     <section aria-labelledby="studio-heading" className="space-y-5">
       <h2 id="studio-heading" className="text-2xl font-semibold">Fashion mannequin</h2>
@@ -112,9 +159,10 @@ export default function PreviewStudio() {
       </div>
       <div className="flex gap-2">
         <button type="button" aria-pressed={shirtVisible} onClick={() => setShirtVisible((visible) => !visible)} className="rounded-lg bg-white px-4 py-2 text-ink">{shirtVisible ? "Hide T-shirt" : "Show T-shirt"}</button>
+        <button type="button" onClick={resetCamera} className="rounded-lg bg-white px-4 py-2 text-ink">Reset camera</button>
       </div>
       <p aria-live="polite" className="text-sm">{view[0].toUpperCase() + view.slice(1)} view</p>
-      <canvas ref={canvasRef} role="img" aria-label="Neutral fashion mannequin wearing a white T-shirt" className="h-[620px] w-full rounded-2xl" />
+      <canvas ref={canvasRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onWheel={handleWheel} role="img" aria-label="Neutral fashion mannequin wearing a white T-shirt" className="h-[620px] w-full rounded-2xl" />
       {failed && <p role="alert">3D graphics are unavailable. Your wardrobe and planner remain usable.</p>}
       <p className="text-xs text-muted">Approximate garment fit, not a prediction of real-world sizing or fit. The shirt is a static lightweight prototype with built-in clearance around the body.</p>
     </section>

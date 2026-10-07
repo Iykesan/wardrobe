@@ -45,6 +45,14 @@
 - Added `tests/garments.test.ts`; total unit/store tests now pass: 33.
 - No garment object, mesh, or binary is written to wardrobe localStorage.
 
+## Priority 3 — viewer controls
+
+- Added pointer drag orbit with bounded elevation and wheel zoom limited to 0.75–1.5.
+- Preserved front/side/back presets and added a reset-camera control.
+- Kept static render-on-change behavior; ordinary wardrobe pages do not initialize the viewer.
+- Added browser coverage for orbit, zoom, reset, garment visibility, and wardrobe-state preservation.
+- Verification: `npm run check` passes with 33 unit/store tests; focused viewer/browser checks pass.
+
 ## Next task
 
-Improve the viewer with pointer orbit, bounded zoom, camera reset, and preserved front/side/back presets. Keep the viewer client-only and unloaded on ordinary wardrobe routes.
+Add optional wardrobe representation metadata for the existing item model, with validated template/color fields and persistence through the current store. Do not store Three.js objects or mesh data.

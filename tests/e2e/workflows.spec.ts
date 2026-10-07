@@ -144,6 +144,18 @@ test("preview mannequin renders front, side and back with a static T-shirt", asy
   await page.getByRole("button", { name: "Show T-shirt", exact: true }).click();
   expect(await savedState(page)).toEqual(before);
 });
+test("preview camera supports orbit, bounded zoom and reset", async ({ page }) => {
+  await page.goto("/preview");
+  const canvas = page.getByRole("img", { name: "Neutral fashion mannequin wearing a white T-shirt" });
+  await expect(canvas).toHaveAttribute("data-rendered", "true");
+  await canvas.hover({ position: { x: 300, y: 300 } });
+  await page.mouse.down();
+  await page.mouse.move(420, 300);
+  await page.mouse.up();
+  await page.mouse.wheel(0, -500);
+  await page.getByRole("button", { name: "Reset camera", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-view", "front");
+});
 test("preview mannequin records navigation-to-render and view response", async ({ page }) => {
   const start = Date.now();
   await page.goto("/preview");
