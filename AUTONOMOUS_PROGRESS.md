@@ -1,5 +1,18 @@
 # Autonomous development progress
 
+## Session 2 — outfit resolution foundation
+
+Starting checkpoint: `776abb4`, clean working tree. Added `src/features/preview/outfit-preview.ts` and `tests/outfit-preview.test.ts`.
+
+- Resolves existing outfit and item IDs without writes or inventory duplication; preserves source record references.
+- Reports missing outfits/items, unmapped items, unsupported templates, and same-slot conflicts. For conflicts, selects the first supported item in saved outfit order and reports every conflicting ID.
+- Only templates in the caller's support list are eligible. Planned template names do not imply implemented geometry or tested compatibility.
+- Twelve resolver cases pass, including deterministic resolution over 500 synthetic items. This is functional coverage, not a rendering benchmark.
+- Parent verification: `npm run check` passed 45 tests plus lint/TypeScript; `npm run test:e2e` built production and passed 37 Chromium tests, including the separate pending camera correction.
+- Resolver is not yet wired into the UI. No trousers, shoes, additional garment compatibility, or visual improvements are claimed by this checkpoint.
+- Next: review and checkpoint camera repairs separately, then add/visually verify the first bottom template and integrate saved outfit selection.
+- Commit identity: the commit containing this entry (`feat: resolve outfit preview by existing wardrobe IDs`).
+
 ## Session start
 
 - Repository: Wardrope, local-only Next.js wardrobe with direct Three.js preview.
