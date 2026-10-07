@@ -96,7 +96,7 @@ Saved task history in `.pi/tasks/` records Task #15 as in progress and paused af
 
 See [the avatar and 3D wardrobe feature plan](AVATAR_AND_3D_WARDROBE_PLAN.md). The goal is a customizable avatar for each user, including skin tone, hair, height, and body proportions, with 3D representations of their clothing that can be combined into outfit previews.
 
-The Phase 3 prototype includes a desktop-only procedural silhouette studio at `/preview` for a shirt, trousers and shoes. It supports front/side/back views and local color changes without writing to wardrobe storage. A focused Chromium run measured 51.1 ms to visible render and 78.9 ms for a side-view interaction in the local Playwright environment. These are single-run browser-side upper bounds, not frame-rate, memory, cross-device, or visual-quality evidence. No fit, sizing, garment construction, animation, mobile support, or external model assets are claimed.
+The Phase 3 prototype now renders a real procedural 3D scene in the browser using Three.js. It includes a simple mannequin with shirt, trousers, and shoes, front/side/back rotation, color controls, and a WebGL-unavailable fallback. It remains an approximate color/silhouette preview: no fit, sizing, garment construction, animation, mobile support, saved avatar configuration, or external model assets are claimed.
 
 ## Working with agents and Git
 

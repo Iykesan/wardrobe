@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-The procedural studio has a focused Chromium timing check. In the local run at commit `bbc2cbf` plus the timing test, browser-side visible render was **51.1 ms** and side-view interaction was **78.9 ms** on the repository's Playwright Chromium environment. These are single-run upper bounds after navigation, not frame-rate, memory, cross-device, or visual-quality evidence. The provisional target is under 3 seconds for initial visible render and under 1 second for view interaction; a 30 FPS target remains unmeasured.
+Phase 3 now renders a procedural Three.js scene for shirt, trousers and shoes, with front/side/back views, local color controls, and a WebGL fallback. The focused Chromium run measured 162.5 ms to visible render and 419.4 ms for side-view interaction in the local Playwright environment. These are single-run browser-side upper bounds, not frame-rate, memory, cross-device, or visual-quality evidence. The 30 FPS target remains unmeasured.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 
