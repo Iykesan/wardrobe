@@ -52,6 +52,14 @@ npm run test:e2e
 
 The browser suite builds and serves the production app on port 3100 with isolated browser contexts. It covers setup, manual clothing entry/editing/filtering, favorites and reloads, outfit editing, plan replacement/removal, deletion cleanup, keyboard dialog behavior, and retired API responses. It does not use your normal browser profile. Date edge cases, storage failures, and W500 save timing also have automated evidence; see [Phase 1 acceptance](docs/PHASE_1_ACCEPTANCE.md). Screen-reader output, other browsers, approved load/search budgets, and broader device performance remain unverified.
 
+Run the local Phase 2 preflight when you need a combined candidate check:
+
+```bash
+npm run release:preflight
+```
+
+It runs `npm run check`, `npm run test:e2e`, production and full dependency audits, and a tracked-secret pattern scan. It does not push, deploy, verify a hosted build, or prove rollback safety. The full audit currently fails on the documented five high development-tool findings; this is expected until Task #15 receives a compatible upstream fix or an explicitly reviewed disposition.
+
 ## Git and GitHub
 
 Commit source, tests, documentation, configuration, and `package-lock.json`. Do not commit `.env.local`, `.pi/`, `node_modules/`, or `.next/`. The GitHub Actions workflow runs the checks and production build on pushes and pull requests. Local commits must still be pushed with working GitHub credentials before GitHub can run them.

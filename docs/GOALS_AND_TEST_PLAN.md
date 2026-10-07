@@ -28,7 +28,7 @@ Keep the existing Next.js feature-oriented structure. Route files should compose
 
 Run `npm ci`, `npm run check`, and `npm run test:e2e` from the repository root. Install Chromium first with `npx playwright install chromium` (use `--with-deps` on Linux). The browser suite builds the production app before starting its isolated server. GitHub Actions runs these checks on Node.js 22.
 
-The latest recorded integrated verification passes 32 unit/store tests and 26 Chromium cases, plus lint, TypeScript and the production build. See [Phase 1 acceptance evidence](PHASE_1_ACCEPTANCE.md) for scope and limits. These historical results do not establish that a GitHub run or deployment has passed.
+The workflow covers P2-01 on GitHub when a push or pull request runs it. For local verification, use `npm run check` and `npm run test:e2e`. `npm run release:preflight` additionally runs both dependency audits and a tracked-secret pattern scan. A passing local preflight does not establish hosted checks, deployment identity, retired-route behavior on the deployment, or rollback safety.
 
 `tests/wardrobe-store.test.ts` covers:
 
