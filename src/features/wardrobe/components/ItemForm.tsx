@@ -17,6 +17,7 @@ type ItemFormValues = {
   fit?: string;
   season?: string;
   notes?: string;
+  representation?: WardrobeItem["representation"];
 };
 
 type ItemFormProps = {
@@ -58,13 +59,14 @@ export default function ItemForm({
       color: initial?.color ?? "",
       fit: initial?.fit ?? "",
       season: initial?.season ?? "",
-      notes: initial?.notes ?? "",
+      representation: initial?.representation,
     },
   });
 
   const [showDetails, setShowDetails] = useState(
     Boolean(initial?.color || initial?.fit || initial?.season || initial?.notes),
   );
+  const [showRepresentation, setShowRepresentation] = useState(Boolean(initial?.representation));
   const categoryId = useWatch({ control, name: "categoryId" });
   const availableSubcategories = useMemo(
     () =>
@@ -85,7 +87,16 @@ export default function ItemForm({
   const subcategoryRegister = register("subcategoryId");
 
   const submitHandler = handleSubmit(async (values) => {
-    const result = itemSchema.safeParse(values);
+    const result = itemSchema.safeParse({
+      ...values,
+      representation: showRepresentation
+        ? {
+            templateId: "wardrope.tshirt",
+            fidelity: "customized-template",
+            color: values.representation?.color,
+          }
+        : undefined,
+    });
     if (!result.success) {
       result.error.issues.forEach((issue) => {
         const field = issue.path[0] as keyof ItemFormValues;
@@ -171,6 +182,28 @@ export default function ItemForm({
             </span>
           )}
         </label>
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface/60 p-4">
+          <div>
+            <div className="text-sm font-semibold text-ink">3D preview template</div>
+            <p className="text-xs text-muted">Optional generic T-shirt template. This does not create another wardrobe item.</p>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setShowRepresentation((value) => !value)}>
+            {showRepresentation ? "Remove" : "Add"}
+          </Button>
+        </div>
+        {showRepresentation && (
+          <div className="grid gap-3 rounded-xl border border-border bg-surface/60 p-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm text-muted">
+              <span className="font-medium text-ink">Template</span>
+              <select className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink" value="wardrope.tshirt" disabled aria-label="3D template">
+                <option value="wardrope.tshirt">T-shirt</option>
+              </select>
+            </label>
+            <InputField label="Preview color" defaultValue={initial?.representation?.color ?? "White"} {...register("representation.color" as never)} />
+          </div>
+        )}
+
 
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-surface/60 p-4">
           <div className="flex items-center justify-between gap-4">

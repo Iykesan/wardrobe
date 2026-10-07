@@ -53,6 +53,17 @@
 - Added browser coverage for orbit, zoom, reset, garment visibility, and wardrobe-state preservation.
 - Verification: `npm run check` passes with 33 unit/store tests; focused viewer/browser checks pass.
 
-## Next task
+## Priority 4 — optional wardrobe representation mapping
 
-Add optional wardrobe representation metadata for the existing item model, with validated template/color fields and persistence through the current store. Do not store Three.js objects or mesh data.
+- Added optional `WardrobeItem.representation` metadata with a validated T-shirt template ID, fidelity, and preview color.
+- Added an item-form control to add/remove the generic T-shirt representation.
+- Existing wardrobe item IDs and inventory counts remain unchanged; representation metadata travels through the existing validated persistence and backup data.
+- No Three.js objects, mesh data, binaries, or uploads are stored in localStorage.
+- Added browser regression coverage for adding the representation and preserving one inventory item.
+- Verification: `npm run check` passes with 33 unit/store tests; full `npm run test:e2e` passes 30 Chromium tests.
+
+## Remaining autonomous work
+
+- Add a preview route workflow that reads an existing item representation and applies its saved color without duplicating inventory.
+- Add explicit garment disposal/compatibility tests and update roadmap evidence.
+- Do not begin accounts, uploads, AI reconstruction, or cloth physics.

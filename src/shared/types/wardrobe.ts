@@ -11,6 +11,12 @@ export type Subcategory = {
   order: number;
 };
 
+export type WardrobeRepresentation = {
+  templateId: "wardrope.tshirt";
+  fidelity: "generic-template" | "customized-template" | "item-specific";
+  color?: string;
+};
+
 export type WardrobeItem = {
   id: string;
   name: string;
@@ -22,5 +28,6 @@ export type WardrobeItem = {
   season?: string;
   notes?: string;
   isFavorite: boolean;
+  representation?: WardrobeRepresentation;
   createdAt: string;
 };

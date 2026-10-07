@@ -11,6 +11,11 @@ const item = z.object({
   createdAt: z.string().datetime(), isFavorite: z.boolean(),
   visualKey: optionalText, color: optionalText, fit: optionalText,
   season: optionalText, notes: optionalText,
+  representation: z.object({
+    templateId: z.literal("wardrope.tshirt"),
+    fidelity: z.enum(["generic-template", "customized-template", "item-specific"]),
+    color: optionalText,
+  }).optional(),
 });
 const outfit = z.object({
   id, name: optionalText, itemIds: z.array(id).min(1, "Select at least one item."),

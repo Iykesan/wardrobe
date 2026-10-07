@@ -52,6 +52,24 @@ test("manual clothing can be edited, filtered, favorited and reloaded", async ({
   await expect(page.getByText("No matches for this filter")).toBeVisible();
 });
 
+test("wardrobe items can opt into a T-shirt representation without duplicating inventory", async ({ page }) => {
+  await setup(page);
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.getByLabel("Item name").fill("Preview shirt");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByLabel("3D template")).toHaveValue("wardrope.tshirt");
+  await page.getByLabel("Preview color").fill("Cloud white");
+  await page.getByRole("button", { name: "Save item", exact: true }).click();
+  await expect.poll(async () => (await savedState(page)).items.length).toBe(1);
+  const state = await savedState(page);
+  expect(state.items).toHaveLength(1);
+  expect(state.items[0].representation).toEqual({
+    templateId: "wardrope.tshirt",
+    fidelity: "customized-template",
+    color: "Cloud white",
+  });
+});
+
 test("outfits use owned items and plans are replaced, removed and cleaned up", async ({ page }) => {
   page.on("dialog", (dialog) => dialog.accept());
   await setup(page);

@@ -24,6 +24,11 @@ export const itemSchema = z.object({
   fit: optionalText,
   season: optionalText,
   notes: optionalText,
+  representation: z.object({
+    templateId: z.literal("wardrope.tshirt"),
+    fidelity: z.literal("customized-template"),
+    color: optionalText,
+  }).optional(),
 });
 
 export const outfitSchema = z.object({
