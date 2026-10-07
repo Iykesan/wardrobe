@@ -17,44 +17,82 @@ function roundedBox(width: number, height: number, depth: number, color: string)
   return mesh;
 }
 
+function capsule(radius: number, length: number, color: string) {
+  const mesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(radius, length, 8, 16),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
+  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
 function createOutfit(shirtColor: string, trouserColor: string, shoeColor: string) {
   const outfit = new THREE.Group();
-  const skin = new THREE.MeshStandardMaterial({ color: "#c99578", roughness: 0.9 });
+  const skin = "#c99578";
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 20, 16), skin);
-  head.position.y = 3.65;
-  head.scale.set(0.88, 1.1, 0.88);
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.46, 24, 18),
+    new THREE.MeshStandardMaterial({ color: skin, roughness: 0.9 }),
+  );
+  head.position.y = 4.02;
+  head.scale.set(0.86, 1.12, 0.86);
+  head.castShadow = true;
   outfit.add(head);
 
-  const shirt = roundedBox(1.65, 1.55, 0.82, shirtColor);
-  shirt.position.y = 2.35;
-  shirt.geometry.translate(0, 0.04, 0);
-  outfit.add(shirt);
+  const neck = capsule(0.18, 0.16, skin);
+  neck.position.y = 3.48;
+  outfit.add(neck);
+
+  // A rounded, slightly tapered torso gives the mannequin shoulders, waist, and hips.
+  const torso = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 24, 16),
+    new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.82 }),
+  );
+  torso.position.y = 2.68;
+  torso.scale.set(0.98, 1.18, 0.52);
+  torso.castShadow = true;
+  torso.receiveShadow = true;
+  outfit.add(torso);
 
   for (const side of [-1, 1]) {
-    const arm = roundedBox(0.42, 1.35, 0.46, shirtColor);
-    arm.position.set(side * 1.08, 2.38, 0);
-    arm.rotation.z = side * -0.12;
-    outfit.add(arm);
+    const upperArm = capsule(0.22, 0.82, shirtColor);
+    upperArm.position.set(side * 1.02, 2.75, 0);
+    upperArm.rotation.z = side * -0.12;
+    outfit.add(upperArm);
 
-    const leg = roundedBox(0.62, 1.65, 0.62, trouserColor);
-    leg.position.set(side * 0.43, 0.82, 0);
+    const forearm = capsule(0.18, 0.7, skin);
+    forearm.position.set(side * 1.16, 1.93, 0);
+    forearm.rotation.z = side * -0.06;
+    outfit.add(forearm);
+
+    const hand = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2, 16, 12),
+      new THREE.MeshStandardMaterial({ color: skin, roughness: 0.9 }),
+    );
+    hand.position.set(side * 1.18, 1.43, 0);
+    hand.scale.set(0.8, 1.15, 0.7);
+    hand.castShadow = true;
+    outfit.add(hand);
+
+    const leg = capsule(0.29, 1.18, trouserColor);
+    leg.position.set(side * 0.38, 0.8, 0);
     outfit.add(leg);
 
-    const shoe = roundedBox(0.72, 0.32, 1.12, shoeColor);
-    shoe.position.set(side * 0.43, -0.18, 0.18);
+    const shoe = roundedBox(0.62, 0.3, 1.12, shoeColor);
+    shoe.position.set(side * 0.38, -0.12, 0.2);
+    shoe.geometry = new THREE.BoxGeometry(0.62, 0.3, 1.12, 3, 2, 4);
+    shoe.castShadow = true;
+    shoe.receiveShadow = true;
     outfit.add(shoe);
   }
 
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.28, 16), skin);
-  neck.position.y = 3.04;
-  outfit.add(neck);
   return outfit;
 }
 
 export default function PreviewStudio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ outfit: THREE.Group; camera: THREE.PerspectiveCamera; renderer: THREE.WebGLRenderer } | null>(null);
+  const sceneRef = useRef<{ outfit: THREE.Group; camera: THREE.PerspectiveCamera; renderer: THREE.WebGLRenderer; scene: THREE.Scene } | null>(null);
   const [view, setView] = useState<View>("front");
   const [shirtColor, setShirtColor] = useState("#4f6d7a");
   const [trouserColor, setTrouserColor] = useState("#334155");
@@ -90,18 +128,18 @@ export default function PreviewStudio() {
       scene.add(floor);
       const outfit = createOutfit(colorsRef.current.shirtColor, colorsRef.current.trouserColor, colorsRef.current.shoeColor);
       scene.add(outfit);
-      sceneRef.current = { outfit, camera, renderer };
+      sceneRef.current = { outfit, camera, renderer, scene };
+      const render = () => renderer.render(scene, camera);
+      render();
       const resize = () => {
         if (!canvas.clientWidth || !canvas.clientHeight) return;
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+        render();
       };
       window.addEventListener("resize", resize);
-      let frame = 0;
-      const render = () => { frame = requestAnimationFrame(render); renderer.render(scene, camera); };
-      render();
-      return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); renderer.dispose(); scene.traverse((object) => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose()); else object.material.dispose(); } }); sceneRef.current = null; };
+      return () => { window.removeEventListener("resize", resize); renderer.dispose(); scene.traverse((object) => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose()); else object.material.dispose(); } }); sceneRef.current = null; };
     } catch {
       window.setTimeout(() => setGraphicsAvailable(false), 0);
     }
@@ -116,11 +154,15 @@ export default function PreviewStudio() {
       else if (object.position.y >= 0.5 && object.position.y < 1.6) object.material.color.set(trouserColor);
       else if (object.position.y < 0.5 && object.position.x !== 0) object.material.color.set(shoeColor);
     });
+    current.renderer.render(current.scene, current.camera);
   }, [shirtColor, trouserColor, shoeColor]);
 
   useEffect(() => {
     const current = sceneRef.current;
-    if (current) current.outfit.rotation.y = viewAngles[view];
+    if (current) {
+      current.outfit.rotation.y = viewAngles[view];
+      current.renderer.render(current.scene, current.camera);
+    }
   }, [view]);
 
   return (
