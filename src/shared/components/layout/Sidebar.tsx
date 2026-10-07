@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Layers, Shirt, Settings } from "lucide-react";
+import { CalendarDays, Layers, Shirt, Settings, Sparkles } from "lucide-react";
 import { APP_NAME } from "@/shared/config/constants";
 
 const navItems = [
   { label: "Wardrobe", href: "/wardrobe", icon: Shirt },
   { label: "Outfits", href: "/outfits", icon: Layers },
   { label: "Plan", href: "/plan", icon: CalendarDays },
+  { label: "Preview", href: "/preview", icon: Sparkles },
 ];
 
 export default function Sidebar() {

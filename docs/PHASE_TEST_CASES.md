@@ -142,7 +142,7 @@ Store fixture definitions alongside executable tests when implemented. Device li
 
 ## Existing automated evidence
 
-The latest recorded integrated suite passes 32 unit/store tests and 26 Chromium cases. See [Phase 1 acceptance evidence](PHASE_1_ACCEPTANCE.md) for the P1-01–P1-12 coverage matrix, candidate commit, measurements and remaining limits. Local retired-route tests cover part of P2-03. These results do **not** establish full performance/accessibility acceptance, a verified release, or that any future avatar, account or fit case passes.
+The Phase 3 work currently contains only a safe `/preview` entry point. It does not establish avatar rendering, asset compatibility, performance budgets, accessibility of a 3D viewer, or support for any future avatar, account or fit case.
 
 Run existing checks with `npm run check` and `npm run test:e2e`. The browser command builds and starts the production app on its isolated test port. Install its browser with `npx playwright install chromium` first. Documentation-only changes do not require rerunning the application suite.
 
