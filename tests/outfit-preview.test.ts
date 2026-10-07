@@ -59,7 +59,7 @@ test("the planned slot table covers the planned IDs with the expected slots", ()
     "wardrope.shorts": "bottom",
     "wardrope.sneakers": "shoes",
   });
-  assert.deepEqual(DEFAULT_SUPPORTED_TEMPLATES, ["wardrope.tshirt"]);
+  assert.deepEqual(DEFAULT_SUPPORTED_TEMPLATES, ["wardrope.tshirt", "wardrope.trousers"]);
 });
 
 test("resolves an outfit by existing IDs and preserves source records by reference", () => {
@@ -121,8 +121,8 @@ test("reports planned templates that the default manifest support list lacks", (
     outfitId: "outfit-1",
     outfits: [outfit("outfit-1", ["top-1", "bottom-1"])],
     items: [item("top-1", "wardrope.tshirt"), item("bottom-1", "wardrope.trousers")],
+    supportedTemplates: ["wardrope.tshirt"],
   });
-
   assert.deepEqual(result.garments.map((g) => g.itemId), ["top-1"]);
   assert.deepEqual(result.issues, [
     { code: "unsupported-template", itemId: "bottom-1", templateId: "wardrope.trousers", slot: "bottom" },

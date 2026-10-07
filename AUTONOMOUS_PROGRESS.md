@@ -9,9 +9,9 @@ Starting checkpoint: `776abb4`, clean working tree. Added `src/features/preview/
 - Only templates in the caller's support list are eligible. Planned template names do not imply implemented geometry or tested compatibility.
 - Twelve resolver cases pass, including deterministic resolution over 500 synthetic items. This is functional coverage, not a rendering benchmark.
 - Parent verification: `npm run check` passed 45 tests plus lint/TypeScript; `npm run test:e2e` built production and passed 37 Chromium tests, including the separate pending camera correction.
-- Resolver is not yet wired into the UI. No trousers, shoes, additional garment compatibility, or visual improvements are claimed by this checkpoint.
-- Next: review and checkpoint camera repairs separately, then add/visually verify the first bottom template and integrate saved outfit selection.
-- Commit identity: the commit containing this entry (`feat: resolve outfit preview by existing wardrobe IDs`).
+- Added the first bottom template (`wardrope.trousers`) as original procedural geometry with a waistband, joined legs, front seam, neutral denim material, and manifest metadata.
+- Default resolver support now includes T-shirt and trousers; other planned families remain unsupported until implemented.
+- Verification: `npm run check` passes 45 unit/store tests. Full browser verification is pending after outfit UI integration.
 
 ## Session start
 

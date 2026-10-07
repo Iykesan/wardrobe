@@ -1,6 +1,6 @@
 import type * as THREE from "three";
 
-export type GarmentFamily = "tshirt";
+export type GarmentFamily = "tshirt" | "trousers";
 export type GarmentFidelity = "generic-template" | "customized-template" | "item-specific";
 
 export type GarmentManifest = {
@@ -37,8 +37,23 @@ export const TSHIRT_MANIFEST: GarmentManifest = {
   loadingBudgetMs: 3000,
 };
 
+export const TROUSERS_MANIFEST: GarmentManifest = {
+  id: "wardrope.trousers",
+  family: "trousers",
+  version: 1,
+  label: "Basic trousers",
+  assetType: "procedural",
+  source: "src/features/preview/garments/trousers.ts",
+  license: "Original project geometry",
+  avatarModel: "wardrope-fashion-mannequin-v1",
+  supportedViews: ["front", "side", "back"],
+  fidelity: "generic-template",
+  loadingBudgetMs: 3000,
+};
+
 export const GARMENT_MANIFESTS: Readonly<Record<string, GarmentManifest>> = {
   [TSHIRT_MANIFEST.id]: TSHIRT_MANIFEST,
+  [TROUSERS_MANIFEST.id]: TROUSERS_MANIFEST,
 };
 
 export function getGarmentManifest(id: string) {
