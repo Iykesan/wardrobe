@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { createMannequin, disposeMannequin } from "../mannequin";
 import { createTShirt, disposeTShirt } from "../garments/tshirt";
 import { TSHIRT_MANIFEST, isManifestCompatible } from "../garments/manifest";
+import { useWardrobe } from "@/features/wardrobe/hooks/useWardrobe";
 
 type View = "front" | "side" | "back";
 const angles = { front: 0, side: Math.PI / 2, back: Math.PI };
@@ -18,8 +19,15 @@ export default function PreviewStudio() {
   const [view, setView] = useState<View>("front");
   const [shirtVisible, setShirtVisible] = useState(true);
   const [failed, setFailed] = useState(false);
+  const { items, isHydrated, initialize } = useWardrobe();
+  const supportedItems = items.filter((item) => item.representation?.templateId === TSHIRT_MANIFEST.id);
+  const [selectedItemId, setSelectedItemId] = useState("");
   const cameraState = useRef({ ...CAMERA_DEFAULT });
   const dragState = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!isHydrated) void initialize();
+  }, [initialize, isHydrated]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -97,6 +105,33 @@ export default function PreviewStudio() {
   useEffect(() => {
     const current = sceneRef.current;
     if (!current) return;
+    const selected = supportedItems.find((item) => item.id === selectedItemId);
+    const color = selected?.representation?.color;
+    current.shirt.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((material) => { if ("color" in material) (material as THREE.MeshStandardMaterial).color.set(color || "#ffffff"); });
+      }
+    });
+    if (color) {
+      try {
+        const parsed = new THREE.Color(color);
+        current.shirt.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            materials.forEach((material) => { if ("color" in material) (material as THREE.MeshStandardMaterial).color.copy(parsed); });
+          }
+        });
+      } catch {
+        // Keep the garment's safe white default for unrecognized user text.
+      }
+    }
+    current.render();
+  }, [selectedItemId, supportedItems]);
+
+  useEffect(() => {
+    const current = sceneRef.current;
+    if (!current) return;
     current.model.rotation.y = angles[view];
     current.shirt.rotation.y = angles[view];
     current.shirt.visible = shirtVisible;
@@ -161,6 +196,15 @@ export default function PreviewStudio() {
         <button type="button" aria-pressed={shirtVisible} onClick={() => setShirtVisible((visible) => !visible)} className="rounded-lg bg-white px-4 py-2 text-ink">{shirtVisible ? "Hide T-shirt" : "Show T-shirt"}</button>
         <button type="button" onClick={resetCamera} className="rounded-lg bg-white px-4 py-2 text-ink">Reset camera</button>
       </div>
+      {isHydrated && supportedItems.length > 0 && (
+        <label className="flex max-w-sm flex-col gap-1 text-sm text-muted">
+          <span className="font-medium text-ink">Saved T-shirt representation</span>
+          <select aria-label="Saved T-shirt representation" value={selectedItemId} onChange={(event) => setSelectedItemId(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-ink">
+            <option value="">Generic white template</option>
+            {supportedItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>
+      )}
       <p aria-live="polite" className="text-sm">{view[0].toUpperCase() + view.slice(1)} view</p>
       <canvas ref={canvasRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onWheel={handleWheel} role="img" aria-label="Neutral fashion mannequin wearing a white T-shirt" className="h-[620px] w-full rounded-2xl" />
       {failed && <p role="alert">3D graphics are unavailable. Your wardrobe and planner remain usable.</p>}

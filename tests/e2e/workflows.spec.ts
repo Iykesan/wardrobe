@@ -70,6 +70,23 @@ test("wardrobe items can opt into a T-shirt representation without duplicating i
   });
 });
 
+test("preview can select a saved T-shirt representation without changing wardrobe data", async ({ page }) => {
+  await setup(page);
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.getByLabel("Item name").fill("Red preview shirt");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByLabel("Preview color").fill("#d94848");
+  await page.getByRole("button", { name: "Save item", exact: true }).click();
+  await expect.poll(async () => (await savedState(page)).items[0]?.representation?.color).toBe("#d94848");
+  const before = await savedState(page);
+  await page.getByRole("link", { name: "Preview", exact: true }).click();
+  const selector = page.getByLabel("Saved T-shirt representation");
+  await expect(selector).toBeVisible();
+  await selector.selectOption({ label: "Red preview shirt" });
+  await expect(page.getByRole("img", { name: "Neutral fashion mannequin wearing a white T-shirt" })).toHaveAttribute("data-rendered", "true");
+  expect(await savedState(page)).toEqual(before);
+});
+
 test("outfits use owned items and plans are replaced, removed and cleaned up", async ({ page }) => {
   page.on("dialog", (dialog) => dialog.accept());
   await setup(page);

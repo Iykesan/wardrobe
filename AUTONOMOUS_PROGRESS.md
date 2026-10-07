@@ -64,6 +64,10 @@
 
 ## Remaining autonomous work
 
-- The preview currently uses the registered generic T-shirt template but does not yet load a selected wardrobe item by ID or apply its saved representation color; this remains the next integration increment.
+- Preview now reads existing supported T-shirt representations by wardrobe item ID and applies saved color metadata without modifying storage. Added browser regression coverage for this workflow.
+- Verification: full `npm run check` passes with 33 unit/store tests; full `npm run test:e2e` passes 31 Chromium tests.
+
+## Remaining autonomous work
+
 - Add explicit garment disposal/compatibility tests and update roadmap evidence.
-- Do not begin accounts, uploads, AI reconstruction, or cloth physics.
+- Outfit preview, avatar profiles, asset uploads, accounts, AI reconstruction, and cloth physics remain intentionally out of scope for this session.
