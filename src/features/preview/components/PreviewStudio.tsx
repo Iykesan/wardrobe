@@ -7,21 +7,34 @@ type View = "front" | "side" | "back";
 
 const viewAngles: Record<View, number> = { front: 0, side: Math.PI / 2, back: Math.PI };
 
-function roundedBox(width: number, height: number, depth: number, color: string) {
+function roundedBox(width: number, height: number, depth: number, color: string, garment?: string) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(width, height, depth),
     new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
   );
+  mesh.userData.garment = garment;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
 }
 
-function capsule(radius: number, length: number, color: string) {
+function capsule(radius: number, length: number, color: string, garment?: string) {
   const mesh = new THREE.Mesh(
     new THREE.CapsuleGeometry(radius, length, 8, 16),
     new THREE.MeshStandardMaterial({ color, roughness: 0.82 }),
   );
+  mesh.userData.garment = garment;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function skinSphere(radius: number, color: string) {
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 20, 14),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
+  );
+  mesh.userData.garment = "skin";
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
@@ -31,59 +44,49 @@ function createOutfit(shirtColor: string, trouserColor: string, shoeColor: strin
   const outfit = new THREE.Group();
   const skin = "#c99578";
 
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.46, 24, 18),
-    new THREE.MeshStandardMaterial({ color: skin, roughness: 0.9 }),
-  );
-  head.position.y = 4.02;
+  const head = skinSphere(0.46, skin);
+  head.position.y = 4.12;
   head.scale.set(0.86, 1.12, 0.86);
-  head.castShadow = true;
   outfit.add(head);
 
-  const neck = capsule(0.18, 0.16, skin);
-  neck.position.y = 3.48;
+  const neck = capsule(0.18, 0.16, skin, "skin");
+  neck.position.y = 3.57;
   outfit.add(neck);
 
-  // A rounded, slightly tapered torso gives the mannequin shoulders, waist, and hips.
-  const torso = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 24, 16),
-    new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.82 }),
-  );
-  torso.position.y = 2.68;
-  torso.scale.set(0.98, 1.18, 0.52);
-  torso.castShadow = true;
-  torso.receiveShadow = true;
-  outfit.add(torso);
+  // The clothing overlaps a simple body form so the figure reads as one mannequin.
+  const shirt = capsule(0.72, 0.72, shirtColor, "shirt");
+  shirt.position.y = 2.7;
+  shirt.scale.set(1.28, 1.05, 0.72);
+  outfit.add(shirt);
+
+  const pelvis = capsule(0.58, 0.28, trouserColor, "trousers");
+  pelvis.position.y = 1.65;
+  pelvis.scale.set(1.18, 0.72, 0.82);
+  outfit.add(pelvis);
 
   for (const side of [-1, 1]) {
-    const upperArm = capsule(0.22, 0.82, shirtColor);
-    upperArm.position.set(side * 1.02, 2.75, 0);
+    const upperArm = capsule(0.2, 0.72, shirtColor, "shirt");
+    upperArm.position.set(side * 0.98, 2.72, 0);
     upperArm.rotation.z = side * -0.12;
     outfit.add(upperArm);
 
-    const forearm = capsule(0.18, 0.7, skin);
-    forearm.position.set(side * 1.16, 1.93, 0);
-    forearm.rotation.z = side * -0.06;
+    const forearm = capsule(0.16, 0.62, skin, "skin");
+    forearm.position.set(side * 1.09, 1.88, 0);
+    forearm.rotation.z = side * -0.05;
     outfit.add(forearm);
 
-    const hand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 16, 12),
-      new THREE.MeshStandardMaterial({ color: skin, roughness: 0.9 }),
-    );
-    hand.position.set(side * 1.18, 1.43, 0);
+    const hand = skinSphere(0.19, skin);
+    hand.position.set(side * 1.1, 1.38, 0);
     hand.scale.set(0.8, 1.15, 0.7);
-    hand.castShadow = true;
     outfit.add(hand);
 
-    const leg = capsule(0.29, 1.18, trouserColor);
-    leg.position.set(side * 0.38, 0.8, 0);
+    const leg = capsule(0.27, 1.15, trouserColor, "trousers");
+    leg.position.set(side * 0.34, 0.7, 0);
     outfit.add(leg);
 
-    const shoe = roundedBox(0.62, 0.3, 1.12, shoeColor);
-    shoe.position.set(side * 0.38, -0.12, 0.2);
-    shoe.geometry = new THREE.BoxGeometry(0.62, 0.3, 1.12, 3, 2, 4);
-    shoe.castShadow = true;
-    shoe.receiveShadow = true;
+    const shoe = roundedBox(0.58, 0.28, 1.02, shoeColor, "shoes");
+    shoe.position.set(side * 0.34, -0.16, 0.2);
+    shoe.geometry = new THREE.BoxGeometry(0.58, 0.28, 1.02, 3, 2, 4);
     outfit.add(shoe);
   }
 
@@ -150,9 +153,9 @@ export default function PreviewStudio() {
     if (!current) return;
     current.outfit.traverse((object) => {
       if (!(object instanceof THREE.Mesh) || !(object.material instanceof THREE.MeshStandardMaterial)) return;
-      if (object.position.y > 1.6 && object.position.y < 3.1) object.material.color.set(shirtColor);
-      else if (object.position.y >= 0.5 && object.position.y < 1.6) object.material.color.set(trouserColor);
-      else if (object.position.y < 0.5 && object.position.x !== 0) object.material.color.set(shoeColor);
+      if (object.userData.garment === "shirt") object.material.color.set(shirtColor);
+      else if (object.userData.garment === "trousers") object.material.color.set(trouserColor);
+      else if (object.userData.garment === "shoes") object.material.color.set(shoeColor);
     });
     current.renderer.render(current.scene, current.camera);
   }, [shirtColor, trouserColor, shoeColor]);
