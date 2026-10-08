@@ -1,4 +1,19 @@
-# Autonomous development progress
+## Session 2 — outfit preview integration
+
+- Added original procedural trousers template `wardrope.trousers` with waistband, joined legs and front seam. It is a generic silhouette, not a denim-fit claim.
+- Expanded validated representation template IDs to T-shirt and trousers. Existing items can select either supported template without changing item IDs or inventory counts.
+- Preview now loads saved outfits by their original outfit IDs, resolves top/bottom representations, displays both supported garments together, applies saved colors, and preserves front/side/back, orbit, zoom, reset, and visibility controls.
+- Missing, unsupported, unmapped, and conflicting outfit items appear as visible preview notes instead of disappearing silently.
+- Added browser coverage for saved top+trousers outfit preview and storage immutability.
+- Visual checks: front/side/back preview screenshots are covered by the existing Chromium workflow; the saved combined outfit workflow passed. Formal visual-quality review of trousers fit remains approximate.
+- Verification: `npm run check` passes 45 unit/store tests; full `npm run test:e2e` passes 38 Chromium tests. W500 measurements remain single-run upper bounds and are not FPS/memory evidence.
+- Commits: `98eac49` trousers template; pending combined viewer integration commit.
+
+## Remaining Session 2 priorities
+
+- Improve the current trousers silhouette after screenshot review if clipping or proportion issues are found.
+- Add explicit camera regression commit from the reviewed camera changes.
+- Do not claim shoes, additional garments, avatar customization, or complete Phase 3/4 acceptance until implemented and visually verified.
 
 ## Session 2 — outfit resolution foundation
 

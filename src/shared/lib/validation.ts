@@ -25,7 +25,7 @@ export const itemSchema = z.object({
   season: optionalText,
   notes: optionalText,
   representation: z.object({
-    templateId: z.literal("wardrope.tshirt"),
+    templateId: z.enum(["wardrope.tshirt", "wardrope.trousers"]),
     fidelity: z.literal("customized-template"),
     color: optionalText,
   }).optional(),

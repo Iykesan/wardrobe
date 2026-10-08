@@ -66,7 +66,8 @@ export default function ItemForm({
   const [showDetails, setShowDetails] = useState(
     Boolean(initial?.color || initial?.fit || initial?.season || initial?.notes),
   );
-  const [showRepresentation, setShowRepresentation] = useState(Boolean(initial?.representation));
+  const [templateId, setTemplateId] = useState<"wardrope.tshirt" | "wardrope.trousers">(initial?.representation?.templateId ?? "wardrope.tshirt");
+  const representation = useWatch({ control, name: "representation" });
   const categoryId = useWatch({ control, name: "categoryId" });
   const availableSubcategories = useMemo(
     () =>
@@ -89,11 +90,11 @@ export default function ItemForm({
   const submitHandler = handleSubmit(async (values) => {
     const result = itemSchema.safeParse({
       ...values,
-      representation: showRepresentation
+      representation: values.representation
         ? {
-            templateId: "wardrope.tshirt",
+            templateId,
             fidelity: "customized-template",
-            color: values.representation?.color,
+            color: values.representation.color,
           }
         : undefined,
     });
@@ -188,17 +189,18 @@ export default function ItemForm({
             <div className="text-sm font-semibold text-ink">3D preview template</div>
             <p className="text-xs text-muted">Optional generic T-shirt template. This does not create another wardrobe item.</p>
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={() => setShowRepresentation((value) => !value)}>
-            {showRepresentation ? "Remove" : "Add"}
+          <Button type="button" variant="ghost" size="sm" onClick={() => setValue("representation", { templateId: "wardrope.tshirt", fidelity: "customized-template", color: "White" })}>
+            Add
           </Button>
         </div>
-        {showRepresentation && (
+        {representation && (
           <div className="grid gap-3 rounded-xl border border-border bg-surface/60 p-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm text-muted">
               <span className="font-medium text-ink">Template</span>
-              <select className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink" value="wardrope.tshirt" disabled aria-label="3D template">
-                <option value="wardrope.tshirt">T-shirt</option>
-              </select>
+              <select aria-label="3D template" value={templateId} onChange={(event) => setTemplateId(event.target.value as "wardrope.tshirt" | "wardrope.trousers")} className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink">
+              <option value="wardrope.tshirt">T-shirt</option>
+              <option value="wardrope.trousers">Trousers</option>
+            </select>
             </label>
             <InputField label="Preview color" defaultValue={initial?.representation?.color ?? "White"} {...register("representation.color" as never)} />
           </div>

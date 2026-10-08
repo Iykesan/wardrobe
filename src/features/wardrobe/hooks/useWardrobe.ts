@@ -7,6 +7,7 @@ export const useWardrobe = () =>
       categories: state.categories,
       subcategories: state.subcategories,
       items: state.items,
+      outfits: state.outfits,
       setupComplete: state.setupComplete,
       isHydrated: state.isHydrated,
       isLoading: state.isLoading,

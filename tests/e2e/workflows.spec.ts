@@ -16,9 +16,16 @@ async function addItem(page: Page, name: string) {
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 }
 
-const savedState = (page: Page) => page.evaluate(() =>
-  JSON.parse(localStorage.getItem("wardrope-store")!).state,
-);
+const savedState = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem("wardrope-store")!).state);
+async function addRepresentedItem(page: Page, name: string) {
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.getByLabel("Item name").fill(name);
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Save item", exact: true }).click();
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+}
+
+
 
 test("manual clothing can be edited, filtered, favorited and reloaded", async ({ page }) => {
   await setup(page);
@@ -162,6 +169,30 @@ test("item dialog supports keyboard focus, containment and Escape", async ({ pag
   await expect(opener).toBeFocused();
 });
 
+test("preview displays a saved top and trousers outfit without changing inventory", async ({ page }) => {
+  await setup(page);
+  await addRepresentedItem(page, "Preview top");
+  await addRepresentedItem(page, "Preview trousers");
+  await page.getByRole("button", { name: "Edit", exact: true }).last().click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByLabel("3D template").selectOption("wardrope.trousers");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByRole("link", { name: "Outfits", exact: true }).click();
+  await page.getByRole("button", { name: "Create outfit", exact: true }).click();
+  await page.getByLabel("Outfit name (optional)").fill("Preview look");
+  await page.getByRole("button", { name: "Preview top", exact: true }).click();
+  await page.getByRole("button", { name: "Preview trousers", exact: true }).click();
+  await page.getByRole("button", { name: "Create outfit", exact: true }).last().click();
+  await expect(page.getByRole("heading", { name: "Preview look" })).toBeVisible();
+  const before = await savedState(page);
+  await page.getByRole("link", { name: "Preview", exact: true }).click();
+  const selector = page.getByLabel("Saved outfit preview");
+  await expect(selector).toBeVisible();
+  await selector.selectOption({ label: "Preview look" });
+  await expect(page.getByRole("img", { name: "Neutral fashion mannequin wearing a white T-shirt" })).toHaveAttribute("data-rendered", "true");
+  await expect(page.getByText("Preview note:", { exact: false })).not.toBeVisible();
+  expect(await savedState(page)).toEqual(before);
+});
 test("preview mannequin renders front, side and back with a static T-shirt", async ({ page }, testInfo) => {
   await setup(page);
   const before = await savedState(page);

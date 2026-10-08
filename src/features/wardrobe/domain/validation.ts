@@ -12,7 +12,7 @@ const item = z.object({
   visualKey: optionalText, color: optionalText, fit: optionalText,
   season: optionalText, notes: optionalText,
   representation: z.object({
-    templateId: z.literal("wardrope.tshirt"),
+    templateId: z.enum(["wardrope.tshirt", "wardrope.trousers"]),
     fidelity: z.enum(["generic-template", "customized-template", "item-specific"]),
     color: optionalText,
   }).optional(),
