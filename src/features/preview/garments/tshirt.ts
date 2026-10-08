@@ -2,18 +2,17 @@ import * as THREE from "three";
 
 type Ring = { y: number; width: number; depth: number };
 
-function appendRingSurface(
+function appendSurface(
   positions: number[],
   indices: number[],
   rings: Ring[],
   columns: number,
-  transform: (ring: Ring, angle: number, row: number) => [number, number, number],
+  point: (ring: Ring, angle: number, row: number) => [number, number, number],
 ) {
   const start = positions.length / 3;
   rings.forEach((ring, row) => {
     for (let column = 0; column < columns; column++) {
-      const angle = column / columns * Math.PI * 2;
-      positions.push(...transform(ring, angle, row));
+      positions.push(...point(ring, column / columns * Math.PI * 2, row));
     }
   });
   for (let row = 0; row < rings.length - 1; row++) {
@@ -32,39 +31,60 @@ function createGarmentGeometry() {
   const positions: number[] = [];
   const indices: number[] = [];
   const torso: Ring[] = [
-    { y: 3.42, width: 0.58, depth: 0.42 },
-    { y: 3.58, width: 0.75, depth: 0.5 },
-    { y: 3.9, width: 0.8, depth: 0.52 },
-    { y: 4.25, width: 0.79, depth: 0.51 },
-    { y: 4.58, width: 0.76, depth: 0.48 },
-    { y: 4.9, width: 0.79, depth: 0.5 },
-    { y: 5.2, width: 0.86, depth: 0.52 },
-    { y: 5.48, width: 0.95, depth: 0.5 },
-    { y: 5.7, width: 0.9, depth: 0.43 },
-    { y: 5.84, width: 0.7, depth: 0.35 },
+    { y: 3.42, width: 0.64, depth: 0.45 }, // hem, slight ease over hips
+    { y: 3.5, width: 0.72, depth: 0.49 },
+    { y: 3.82, width: 0.75, depth: 0.51 },
+    { y: 4.18, width: 0.74, depth: 0.5 },
+    { y: 4.55, width: 0.73, depth: 0.49 },
+    { y: 4.92, width: 0.76, depth: 0.5 },
+    { y: 5.25, width: 0.84, depth: 0.51 },
+    { y: 5.48, width: 0.91, depth: 0.47 },
+    { y: 5.66, width: 0.84, depth: 0.41 },
+    { y: 5.78, width: 0.59, depth: 0.32 },
   ];
-  appendRingSurface(positions, indices, torso, 40, (ring, angle, row) => {
-    const shoulderLift = row === torso.length - 1 ? Math.sin(angle) * 0.035 : 0;
-    return [Math.cos(angle) * ring.width, ring.y + shoulderLift, Math.sin(angle) * ring.depth];
+  appendSurface(positions, indices, torso, 48, (ring, angle, row) => {
+    const shoulder = row >= 7 ? Math.sin(angle) * 0.025 : 0;
+    // A little more room at the chest than the waist is characteristic of a
+    // regular-fit tee; the front remains gently convex, not spherical.
+    const front = Math.sin(angle) > 0 ? 0.018 : 0;
+    return [Math.cos(angle) * ring.width, ring.y + shoulder, Math.sin(angle) * ring.depth + front];
   });
 
-  const sleeve: Ring[] = [
-    { y: 0, width: 0.36, depth: 0.34 },
-    { y: 0.16, width: 0.34, depth: 0.33 },
-    { y: 0.38, width: 0.27, depth: 0.28 },
-    { y: 0.58, width: 0.21, depth: 0.24 },
+  const sleeveRings = [
+    { distance: 0, radius: 0.29 },
+    { distance: 0.12, radius: 0.31 },
+    { distance: 0.31, radius: 0.285 },
+    { distance: 0.5, radius: 0.255 },
+    { distance: 0.58, radius: 0.24 },
   ];
   for (const side of [-1, 1]) {
-    appendRingSurface(positions, indices, sleeve, 20, (ring, angle) => {
-      const axisT = ring.y / 0.56;
-      const centerX = side * (0.58 + axisT * 0.4);
-      const centerY = 5.58 - axisT * 0.3;
-      const along = new THREE.Vector3(side * 0.34, -0.3, 0).normalize();
-      const widthAxis = new THREE.Vector3(-along.y * side, along.x * side, 0);
-      const around = widthAxis.multiplyScalar(Math.cos(angle) * ring.width);
-      const depth = new THREE.Vector3(0, 0, Math.sin(angle) * ring.depth);
-      return [centerX + around.x + depth.x, centerY + around.y + depth.y, around.z + depth.z];
+    // The sleeve starts at the shoulder line and ends above the elbow. Its
+    // first ring is deliberately buried in the torso/armhole transition;
+    // the visible cuff is the only open edge.
+    const start = positions.length / 3;
+    const axis = new THREE.Vector3(side * 0.48, -0.24, 0).normalize();
+    const radial = new THREE.Vector3(-axis.y * side, axis.x * side, 0).normalize();
+    const origin = new THREE.Vector3(side * 0.72, 5.5, 0);
+    sleeveRings.forEach(({ distance, radius }) => {
+      const center = origin.clone().addScaledVector(axis, distance);
+      for (let column = 0; column < 24; column++) {
+        const angle = column / 24 * Math.PI * 2;
+        const p = center.clone()
+          .addScaledVector(radial, Math.cos(angle) * radius)
+          .add(new THREE.Vector3(0, 0, Math.sin(angle) * radius * 0.92));
+        positions.push(p.x, p.y, p.z);
+      }
     });
+    for (let row = 0; row < sleeveRings.length - 1; row++) {
+      for (let column = 0; column < 24; column++) {
+        const next = (column + 1) % 24;
+        const a = start + row * 24 + column;
+        const b = start + row * 24 + next;
+        const c = start + (row + 1) * 24 + column;
+        const d = start + (row + 1) * 24 + next;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -75,12 +95,7 @@ function createGarmentGeometry() {
 }
 
 function garmentMaterial() {
-  return new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.86,
-    metalness: 0,
-    side: THREE.DoubleSide,
-  });
+  return new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.82, metalness: 0, side: THREE.DoubleSide });
 }
 
 export function createTShirt() {
@@ -92,18 +107,36 @@ export function createTShirt() {
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   garment.add(mesh);
+  const rib = new THREE.MeshStandardMaterial({ color: 0xe1e4e6, roughness: 0.72, side: THREE.DoubleSide });
+  // Closed cuffs prevent the mannequin from showing through the sleeve opening.
+  for (const side of [-1, 1]) {
+    const cuff = new THREE.Mesh(new THREE.CircleGeometry(0.235, 24), rib);
+    cuff.name = `tshirt.${side < 0 ? "left" : "right"}SleeveOpening`;
+    cuff.position.set(side * 0.72 + side * 0.48, 5.5 - 0.24, 0);
+    cuff.rotation.set(0, side * Math.PI / 2.68, 0);
+    cuff.castShadow = true;
+    garment.add(cuff);
+  }
 
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.055, 10, 32), material);
-  collar.name = "tshirt.crewNeck";
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.052, 12, 40), rib);
+  collar.name = "tshirt.ribbedCrewNeck";
   collar.position.set(0, 5.82, 0);
   collar.rotation.x = Math.PI / 2;
   collar.scale.z = 0.76;
   collar.castShadow = true;
   garment.add(collar);
 
+  // Subtle raised hems communicate construction without a physics simulation.
+  const hem = new THREE.Mesh(new THREE.TorusGeometry(0.69, 0.018, 6, 48), rib);
+  hem.name = "tshirt.bottomHemDetail";
+  hem.position.set(0, 3.43, 0);
+  hem.scale.z = 0.64;
+  hem.castShadow = true;
+  garment.add(hem);
+
   garment.userData.garmentType = "tshirt";
   garment.userData.material = "white-cotton";
-  garment.userData.source = "custom-connected-garment-mesh";
+  garment.userData.source = "original-authored-connected-garment-surface";
   return garment;
 }
 

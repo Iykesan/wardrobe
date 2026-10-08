@@ -52,11 +52,11 @@ export default function PreviewStudio() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#e1e5e7");
+    scene.background = new THREE.Color("#cbd2d5");
     const camera = new THREE.OrthographicCamera(-3, 3, 4.4, -4.4, 0.1, 50);
     camera.position.set(0, 4.25, 16);
     camera.lookAt(0, 3.75, 0);
-    scene.add(new THREE.HemisphereLight("#ffffff", "#a2aab4", 2));
+    scene.add(new THREE.HemisphereLight("#ffffff", "#737d88", 1.7));
     const key = new THREE.DirectionalLight("#fff7ed", 3);
     key.position.set(4, 10, 7);
     key.castShadow = true;
@@ -65,9 +65,12 @@ export default function PreviewStudio() {
     key.shadow.normalBias = 0.03;
     key.shadow.radius = 4;
     scene.add(key);
-    const fill = new THREE.DirectionalLight("#dde9ff", 1.1);
+    const fill = new THREE.DirectionalLight("#c9dcff", 0.8);
     fill.position.set(-5, 5, -3);
     scene.add(fill);
+    const rim = new THREE.DirectionalLight("#ffffff", 1.3);
+    rim.position.set(-3, 7, -8);
+    scene.add(rim);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.ShadowMaterial({ opacity: 0.16 }));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
@@ -91,7 +94,7 @@ export default function PreviewStudio() {
     sceneRef.current = { model, shirt, trousers, camera, render };
     const resize = () => {
       const aspect = canvas.clientWidth / canvas.clientHeight;
-      const halfHeight = Math.max(4.4, 2.2 / aspect);
+      const halfHeight = Math.max(3.95, 1.98 / aspect);
       camera.left = -halfHeight * aspect;
       camera.right = halfHeight * aspect;
       camera.top = halfHeight;
