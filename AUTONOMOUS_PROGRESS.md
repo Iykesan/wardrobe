@@ -1,3 +1,11 @@
+## Session 3 — foundational T-shirt visual-quality pass
+
+- Audited the current screenshot and implementation before editing. No Blender executable, GLB/GLTF asset, or local asset pipeline was available; the failure was caused by a closed lathed torso plus independently generated sleeve tubes with an abrupt shoulder intersection.
+- Reworked the original authored custom surface with a narrower regular-fit chest/waist profile, buried sleeve starts, closed sleeve openings, ribbed collar and hem details, and stronger neutral scene contrast.
+- Captured and inspected fresh front, side and back Chromium screenshots. The garment now has stable coverage and no open cuff holes or major mannequin clipping; it remains an original lightweight procedural mesh, not a professionally authored GLB.
+- Verification: `npm run check` passed lint, TypeScript, and 45 unit/store tests; focused front/side/back browser screenshot test passed; `git diff --check` passed.
+- Commit: `e08adcc` (`fix: refine static tshirt silhouette and preview lighting`).
+
 ## Session 2 — outfit preview integration
 
 - Added original procedural trousers template `wardrope.trousers` with waistband, joined legs and front seam. It is a generic silhouette, not a denim-fit claim.
