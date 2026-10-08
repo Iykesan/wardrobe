@@ -25,9 +25,13 @@ export const itemSchema = z.object({
   season: optionalText,
   notes: optionalText,
   representation: z.object({
-    templateId: z.enum(["wardrope.tshirt", "wardrope.trousers"]),
+    templateId: z.enum(["wardrope.tshirt", "wardrope.trousers", "wardrope.oversized-tshirt", "wardrope.hoodie", "wardrope.jeans", "wardrope.wide-leg-pants", "wardrope.shorts", "wardrope.sneakers"]),
     fidelity: z.literal("customized-template"),
     color: optionalText,
+    assetId: optionalText,
+    assetVersion: optionalText,
+    fitVariation: optionalText,
+    materialPreset: optionalText,
   }).optional(),
 });
 

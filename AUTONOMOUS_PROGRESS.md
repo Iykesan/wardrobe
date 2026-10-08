@@ -6,6 +6,14 @@
 - Verification: `npm run check` passed lint, TypeScript, and 45 unit/store tests; focused front/side/back browser screenshot test passed; `git diff --check` passed.
 - Commit: `e08adcc` (`fix: refine static tshirt silhouette and preview lighting`).
 
+## Session 3 — reusable clothing library foundation
+
+- Audited and documented licensed external asset sources. No redistributable regular T-shirt, jeans, or low-top sneaker asset was approved; no gated download was bypassed and no unverified binary was added.
+- Added `docs/ASSET_AUDIT.md` with Poly Haven, Sketchfab, CGTrader, and BlenderKit findings and the required provenance record for future GLB assets.
+- Expanded the manifest/catalog and wardrobe representation metadata for the seven requested template IDs. Runtime manifests remain limited to the two authored, verified procedural templates; unavailable families are explicit rather than misleading substitutes.
+- Added asset ID/version, fit variation, material preset, availability, and layer metadata while preserving existing wardrobe IDs and localStorage boundaries.
+- Verification: `npm run check` passed lint, TypeScript, and 45 unit/store tests; `git diff --check` passed. Full three-piece visual verification is blocked until licensed jeans/sneakers assets or a Blender authoring workflow are supplied.
+
 ## Session 2 — outfit preview integration
 
 - Added original procedural trousers template `wardrope.trousers` with waistband, joined legs and front seam. It is a generic silhouette, not a denim-fit claim.

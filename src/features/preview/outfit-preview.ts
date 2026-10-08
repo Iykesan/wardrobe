@@ -1,4 +1,4 @@
-import { GARMENT_MANIFESTS } from "./garments/manifest";
+import { GARMENT_CATALOG, GARMENT_MANIFESTS } from "./garments/manifest";
 
 /**
  * Pure resolution of an outfit preview from existing wardrobe records.
@@ -29,12 +29,16 @@ export const TEMPLATE_SLOTS: Readonly<Record<string, GarmentSlot>> = {
   "wardrope.long-sleeve": "top",
   "wardrope.hoodie": "top",
   "wardrope.trousers": "bottom",
+  "wardrope.jeans": "bottom",
+  "wardrope.wide-leg-pants": "bottom",
   "wardrope.shorts": "bottom",
   "wardrope.sneakers": "shoes",
 };
 
 /** Templates that currently ship a manifest, used when the caller omits a list. */
 export const DEFAULT_SUPPORTED_TEMPLATES: readonly string[] = Object.keys(GARMENT_MANIFESTS);
+
+export const CATALOG_TEMPLATE_IDS: readonly string[] = GARMENT_CATALOG.map((manifest) => manifest.id);
 
 /**
  * Structural view of a wardrobe item. Real `WardrobeItem` records satisfy this

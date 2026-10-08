@@ -66,7 +66,7 @@ export default function ItemForm({
   const [showDetails, setShowDetails] = useState(
     Boolean(initial?.color || initial?.fit || initial?.season || initial?.notes),
   );
-  const [templateId, setTemplateId] = useState<"wardrope.tshirt" | "wardrope.trousers">(initial?.representation?.templateId ?? "wardrope.tshirt");
+  const [templateId, setTemplateId] = useState<NonNullable<WardrobeItem["representation"]>["templateId"]>(initial?.representation?.templateId ?? "wardrope.tshirt");
   const representation = useWatch({ control, name: "representation" });
   const categoryId = useWatch({ control, name: "categoryId" });
   const availableSubcategories = useMemo(
@@ -197,9 +197,11 @@ export default function ItemForm({
           <div className="grid gap-3 rounded-xl border border-border bg-surface/60 p-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm text-muted">
               <span className="font-medium text-ink">Template</span>
-              <select aria-label="3D template" value={templateId} onChange={(event) => setTemplateId(event.target.value as "wardrope.tshirt" | "wardrope.trousers")} className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink">
-              <option value="wardrope.tshirt">T-shirt</option>
+              <select aria-label="3D template" value={templateId} onChange={(event) => setTemplateId(event.target.value as NonNullable<WardrobeItem["representation"]>["templateId"])} className="rounded-xl border border-border bg-white/90 px-3 py-2 text-sm text-ink">
+              <option value="wardrope.tshirt">Regular T-shirt</option>
               <option value="wardrope.trousers">Trousers</option>
+              <option value="wardrope.jeans">Straight-leg jeans (asset unavailable)</option>
+              <option value="wardrope.sneakers">Low-top sneakers (asset unavailable)</option>
             </select>
             </label>
             <InputField label="Preview color" defaultValue={initial?.representation?.color ?? "White"} {...register("representation.color" as never)} />

@@ -56,6 +56,8 @@ test("the planned slot table covers the planned IDs with the expected slots", ()
     "wardrope.long-sleeve": "top",
     "wardrope.hoodie": "top",
     "wardrope.trousers": "bottom",
+    "wardrope.jeans": "bottom",
+    "wardrope.wide-leg-pants": "bottom",
     "wardrope.shorts": "bottom",
     "wardrope.sneakers": "shoes",
   });

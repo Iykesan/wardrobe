@@ -11,11 +11,15 @@ export type Subcategory = {
   order: number;
 };
 
-export type GarmentTemplateId = "wardrope.tshirt" | "wardrope.trousers";
+export type GarmentTemplateId = "wardrope.tshirt" | "wardrope.trousers" | "wardrope.oversized-tshirt" | "wardrope.hoodie" | "wardrope.jeans" | "wardrope.wide-leg-pants" | "wardrope.shorts" | "wardrope.sneakers";
 export type WardrobeRepresentation = {
   templateId: GarmentTemplateId;
   fidelity: "generic-template" | "customized-template" | "item-specific";
   color?: string;
+  assetId?: string;
+  assetVersion?: string;
+  fitVariation?: string;
+  materialPreset?: string;
 };
 
 export type WardrobeItem = {
